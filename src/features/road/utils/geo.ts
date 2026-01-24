@@ -1,7 +1,7 @@
 import L from 'leaflet';
 import { type Road } from '../types';
 
-const CLICK_TOLERANCE_PX = 5;
+const CLICK_TOLERANCE_PX = 15;
 
 // Simple Bounds Interface (Leaflet-independent for raw speed)
 export interface SimpleBounds {
