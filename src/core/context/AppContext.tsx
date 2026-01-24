@@ -57,7 +57,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     setIsLoading(true);
 
-    const fetchCities = fetch('/data/cities.json')
+    const fetchCities = fetch('/nl-quiz/data/cities.json')
       .then(res => res.json())
       .then(geoJson => {
         return geoJson.features.map((f: any) => ({
@@ -74,7 +74,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return [];
       });
 
-    const fetchRoads = fetch('/data/roads.json')
+    const fetchRoads = fetch('/nl-quiz/data/roads.json')
       .then(res => res.json())
       .then(geoJson => {
         return geoJson.features.map((f: any) => ({
