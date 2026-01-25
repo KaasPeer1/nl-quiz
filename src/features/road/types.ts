@@ -1,4 +1,4 @@
-import { type GameFeature } from "../../types";
+import { type GameFeature } from "../../core/types";
 
 export interface Road extends GameFeature {
   type: 'A' | 'N' | 'S' | 'E';

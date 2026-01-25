@@ -3,14 +3,13 @@ import { type Road } from '../types';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { useAliasContext } from '../../../core/context/AliasContext';
-import { type GameFeature } from '../../../types';
 import { useTranslation } from 'react-i18next';
 import clsx from 'clsx';
 
 interface Props {
-  feature: GameFeature;
+  feature: Road;
   onClose: () => void;
-  onSelect: (feature: GameFeature) => void;
+  onSelect: (feature: Road) => void;
 }
 
 interface EnhancedRoad extends Road {

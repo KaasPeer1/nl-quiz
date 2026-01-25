@@ -1,147 +1,109 @@
-import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
-import type { GameFeature, GameModeDefinition, GameStats, ReplayOptions } from '../../types';
-import { CityGameMode } from '../../features/city';
-import { RoadGameMode } from '../../features/road';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import type { GameModeAdapter, ReplayOptions, Question } from '../types';
+import { CityAdapter } from '../../features/city/CityAdapter';
+import { RoadAdapter } from '../../features/road/RoadAdapter';
+import { normalizeString } from '../../utils';
 
-export const AVAILABLE_MODES = [CityGameMode, RoadGameMode];
-
-type Screen = 'MENU' | 'PLAY' | 'RESULTS';
+export const AVAILABLE_ADAPTERS = [CityAdapter, RoadAdapter];
 
 interface LastGameResult {
-  stats: GameStats;
-  targets: GameFeature[];
-  correct: GameFeature[];
-  wrong: GameFeature[];
+  stats: any;
+  history: { correct: Question<any>[], wrong: Question<any>[] };
 }
 
 interface AppState {
-  screen: Screen;
-  setScreen: (s: Screen) => void;
+  screen: 'MENU' | 'PLAY' | 'RESULTS';
+  setScreen: (s: 'MENU' | 'PLAY' | 'RESULTS') => void;
 
-  activeMode: GameModeDefinition<any>;
-  setActiveMode: (mode: GameModeDefinition<any>) => void;
+  activeAdapter: GameModeAdapter<any, any>;
+  setActiveAdapter: (adapter: GameModeAdapter<any, any>) => void;
 
   config: any;
   setConfig: (c: any) => void;
 
-  data: GameFeature[];
+  data: { cities: any[], roads: any[] };
   isLoading: boolean;
 
   lastGameResult: LastGameResult | null;
   setLastGameResult: (res: LastGameResult) => void;
+
   replayOptions: ReplayOptions | null;
   startReplay: () => void;
   clearReplay: () => void;
+  startNewGame: () => void;
 }
 
 const AppContext = createContext<AppState>({} as AppState);
 
-const normalizeString = (str: string) =>
-  str.toLowerCase().trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [screen, setScreen] = useState<Screen>('MENU');
-  const [activeMode, setActiveMode] = useState(AVAILABLE_MODES[0]);
-  const [config, setConfig] = useState(AVAILABLE_MODES[0].defaultConfig);
+  const [screen, setScreen] = useState<'MENU' | 'PLAY' | 'RESULTS'>('MENU');
+  const [activeAdapter, setActiveAdapter] = useState(AVAILABLE_ADAPTERS[0]);
+  const [config, setConfig] = useState(AVAILABLE_ADAPTERS[0].defaultConfig);
 
-  // Data State
   const [cityData, setCityData] = useState<any[]>([]);
   const [roadData, setRoadData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Result & Replay State
   const [lastGameResult, setLastGameResult] = useState<LastGameResult | null>(null);
   const [replayOptions, setReplayOptions] = useState<ReplayOptions | null>(null);
 
-  // Load Data on Mount
   useEffect(() => {
     setIsLoading(true);
+    Promise.all([
+      fetch('/nl-quiz/data/cities.json').then(r => r.json()).catch(() => ({ features: [] })),
+      fetch('/nl-quiz/data/roads.json').then(r => r.json()).catch(() => ({ features: [] }))
+    ]).then(([cityJson, roadJson]) => {
+      const cities = cityJson.features.map((f: any) => ({
+        ...f.properties,
+        id: f.properties.identificatie,
+        aliases: (f.properties.aliases || []).map(normalizeString),
+        geometry: f.geometry
+      }));
 
-    const fetchCities = fetch('/nl-quiz/data/cities.json')
-      .then(res => res.json())
-      .then(geoJson => {
-        return geoJson.features.map((f: any) => ({
-          id: f.properties.identificatie,
-          name: f.properties.name,
-          aliases: (f.properties.aliases || []).map(normalizeString),
-          population: f.properties.population,
-          province: f.properties.province,
-          geometry: f.geometry
-        }));
-      })
-      .catch(err => {
-        console.error("Failed to load cities:", err);
-        return [];
-      });
+      const roads = roadJson.features.map((f: any) => ({
+        ...f.properties,
+        aliases: (f.properties.aliases || []).map(normalizeString),
+        geometry: f.geometry
+      }));
 
-    const fetchRoads = fetch('/nl-quiz/data/roads.json')
-      .then(res => res.json())
-      .then(geoJson => {
-        return geoJson.features.map((f: any) => ({
-          ...f.properties, // Spread generic properties (id, type, lengthKm, etc.)
-          aliases: (f.properties.aliases || []).map(normalizeString),
-          geometry: f.geometry
-        }));
-      })
-      .catch(err => {
-        console.warn("Failed to load roads (file might not exist yet):", err);
-        return [];
-      });
-
-    // Wait for both to finish
-    Promise.all([fetchCities, fetchRoads]).then(([cities, roads]) => {
       setCityData(cities);
       setRoadData(roads);
       setIsLoading(false);
     });
   }, []);
 
-  const currentData = useMemo(() => {
-    switch (activeMode.id) {
-      case 'city-quiz':
-        return cityData;
-      case 'road-quiz':
-        return roadData;
-      default:
-        return [];
-    }
-  }, [activeMode.id, cityData, roadData]);
-
-  const handleSetMode = (mode: GameModeDefinition<any>) => {
-    setActiveMode(mode);
-    setConfig(mode.defaultConfig);
+  const handleSetAdapter = (adapter: GameModeAdapter<any, any>) => {
+    setActiveAdapter(adapter);
+    setConfig(adapter.defaultConfig);
     clearReplay();
   };
 
+  const startNewGame = () => {
+    clearReplay();
+    setScreen('PLAY');
+  }
+
   const startReplay = () => {
-    if (lastGameResult && lastGameResult.wrong.length > 0) {
+    if (lastGameResult && lastGameResult.history.wrong.length > 0) {
       setReplayOptions({
-        toPlayIds: lastGameResult.wrong.map(f => f.id),
-        solvedIds: lastGameResult.correct.map(f => f.id)
+        toPlayIds: lastGameResult.history.wrong.map(q => q.payload.id),
+        solvedIds: lastGameResult.history.correct.map(q => q.payload.id)
       });
       setScreen('PLAY');
     }
   };
 
-  const clearReplay = () => {
-    setReplayOptions(null);
-  };
+  const clearReplay = () => setReplayOptions(null);
 
   return (
     <AppContext.Provider value={{
-      screen,
-      setScreen,
-      activeMode,
-      setActiveMode: handleSetMode,
-      config,
-      setConfig,
-      data: currentData,
+      screen, setScreen,
+      activeAdapter, setActiveAdapter: handleSetAdapter,
+      config, setConfig,
+      data: { cities: cityData, roads: roadData },
       isLoading,
-      lastGameResult,
-      setLastGameResult,
-      replayOptions,
-      startReplay,
-      clearReplay,
+      lastGameResult, setLastGameResult,
+      replayOptions, startReplay, clearReplay, startNewGame
     }}>
       {children}
     </AppContext.Provider>

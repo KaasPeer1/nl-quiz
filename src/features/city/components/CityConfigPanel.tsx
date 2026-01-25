@@ -25,7 +25,7 @@ export const CityConfigPanel: React.FC<{
   const { t } = useTranslation();
   const { data } = useApp();
 
-  const provinces = useMemo(() => Array.from(new Set(data.map(c => c.province))).sort(), [data]);
+  const provinces = useMemo(() => Array.from(new Set(data.cities.map(c => c.province))).sort(), [data.cities]);
 
   const toggleProv = (p: string) => {
     const current = config.selectedProvinces;

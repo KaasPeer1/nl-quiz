@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { GeoJSON, type GeoJSONProps } from 'react-leaflet';
 import L from 'leaflet';
-import type { GameFeature } from '../../types';
+import type { GameFeature } from '../../core/types';
 
 interface FlashingProps extends Omit<GeoJSONProps, "data"> {
   feature: GameFeature;

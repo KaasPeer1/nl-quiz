@@ -3,17 +3,16 @@ import type { City } from '../types';
 import { Card } from '../../../components/ui/Card';
 import { Button } from '../../../components/ui/Button';
 import { useAliasContext } from '../../../core/context/AliasContext';
-import type { GameFeature } from '../../../types';
 import { useTranslation } from 'react-i18next';
 
 interface Props {
-  feature: GameFeature;
+  feature: City;
   onClose: () => void;
-  onSelect: (feature: GameFeature) => void;
+  onSelect: (feature: City) => void;
 }
 
 export const CityInfoCard: React.FC<Props> = ({ feature, onClose }) => {
-  const city = feature as City; // Cast because we know this component is for City Mode
+  const city = feature;
   const { t } = useTranslation();
   const { aliases, addAlias, removeAlias } = useAliasContext();
   const [newAlias, setNewAlias] = useState('');

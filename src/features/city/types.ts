@@ -1,4 +1,4 @@
-import type { GameFeature } from "../../types";
+import type { GameFeature } from "../../core/types";
 
 export interface City extends GameFeature {
   aliases: string[];
