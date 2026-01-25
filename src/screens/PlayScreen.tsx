@@ -74,7 +74,7 @@ export const PlayScreen = () => {
       return
     }
 
-    if (selectedFeature?.id === feature.id || (selectedFeature && feature['_overlaps'] && feature['_overlaps'].some((f: GameFeature) => f.id === selectedFeature.id))) {
+    if (selectedFeature?.id === feature.id) { //  || (selectedFeature && feature['_overlaps'] && feature['_overlaps'].some((f: GameFeature) => f.id === selectedFeature.id))
       setSelectedFeature(null);
       return;
     }

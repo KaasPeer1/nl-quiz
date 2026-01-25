@@ -5,6 +5,7 @@ import { GameMap } from '../components/map/GameMap';
 import { useTranslation } from 'react-i18next';
 import { useState } from 'react';
 import type { QuizState } from '../core/types';
+import type { GameFeature } from '../core/types';
 
 export const ResultScreen = () => {
   const { t } = useTranslation();
@@ -36,6 +37,20 @@ export const ResultScreen = () => {
     stats: stats
   };
 
+  const handleMapClick = (feature: GameFeature | null) => {
+    if (!feature) {
+      if (selectedFeature) setSelectedFeature(null);
+      return
+    }
+
+    if (selectedFeature?.id === feature.id) {
+      setSelectedFeature(null);
+      return;
+    }
+
+    setSelectedFeature(feature);
+  };
+
   return (
     <div className="h-screen w-screen relative flex flex-col">
       <div className="bg-white border-b px-4 py-2 flex justify-between items-center z-10 shadow-sm">
@@ -47,7 +62,7 @@ export const ResultScreen = () => {
         <GameMap>
           <activeAdapter.MapLayers
             gameState={resultState}
-            onInteraction={setSelectedFeature}
+            onInteraction={handleMapClick}
             config={config}
             selectedFeature={selectedFeature}
           />
@@ -58,7 +73,7 @@ export const ResultScreen = () => {
             <activeAdapter.InfoCardComponent
               feature={selectedFeature}
               onClose={() => setSelectedFeature(null)}
-              onSelect={setSelectedFeature}
+              onSelect={handleMapClick}
             />
           </div>
         )}
