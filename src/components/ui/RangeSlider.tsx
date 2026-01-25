@@ -1,15 +1,18 @@
 import React from 'react';
-import Slider from '@mui/material/Slider';
+import MuiSlider from '@mui/material/Slider';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
-interface RangeSliderProps {
+interface BaseSliderProps {
   min: number;
   max: number;
-  value: [number, number];
   step?: number;
-  onChange: (val: [number, number]) => void;
   formatLabel?: (val: number) => string;
+}
+
+interface RangeSliderProps extends BaseSliderProps {
+  value: [number, number];
+  onChange: (val: [number, number]) => void;
 }
 
 export const RangeSlider: React.FC<RangeSliderProps> = ({ min, max, value, step = 1, onChange, formatLabel }) => {
@@ -23,7 +26,7 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({ min, max, value, step 
 
   return (
     <Box sx={{ width: '100%', px: 1, py: 2 }}>
-      <Slider
+      <MuiSlider
         value={value}
         min={min}
         max={max}
@@ -43,6 +46,33 @@ export const RangeSlider: React.FC<RangeSliderProps> = ({ min, max, value, step 
           </Typography>
         </Box>
       )}
+    </Box>
+  );
+};
+
+interface SimpleSliderProps extends BaseSliderProps {
+  value: number;
+  onChange: (val: number) => void;
+}
+
+export const SimpleSlider: React.FC<SimpleSliderProps> = ({ min, max, value, step = 1, onChange }) => {
+  const handleChange = (_: Event, newValue: number | number[]) => {
+    // MUI returns a number when value is a number
+    if (typeof newValue === 'number') {
+      onChange(newValue);
+    }
+  };
+
+  return (
+    <Box sx={{ width: '100%', px: 1, py: 2 }}>
+      <MuiSlider
+        value={value}
+        min={min}
+        max={max}
+        step={step}
+        onChange={handleChange}
+        valueLabelDisplay="off"
+      />
     </Box>
   );
 };

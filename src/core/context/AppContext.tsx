@@ -35,10 +35,34 @@ interface AppState {
 
 const AppContext = createContext<AppState>({} as AppState);
 
+const loadConfigForAdapter = (adapter: GameModeAdapter<any, any>) => {
+  const key = `nl_quiz_config_${adapter.id}`;
+  const savedString = localStorage.getItem(key);
+
+  if (!savedString) return adapter.defaultConfig;
+
+  try {
+    const saved = JSON.parse(savedString);
+    const merged = { ...adapter.defaultConfig, ...saved };
+
+    if (adapter.defaultConfig.learningOptions) {
+      merged.learningOptions = {
+        ...adapter.defaultConfig.learningOptions,
+        ...(saved.learningOptions || {})
+      };
+    }
+
+    return merged;
+  } catch (e) {
+    console.error("Failed to parse saved config, resetting to default", e);
+    return adapter.defaultConfig;
+  }
+};
+
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [screen, setScreen] = useState<'MENU' | 'PLAY' | 'RESULTS'>('MENU');
   const [activeAdapter, setActiveAdapter] = useState(AVAILABLE_ADAPTERS[0]);
-  const [config, setConfig] = useState(AVAILABLE_ADAPTERS[0].defaultConfig);
+  const [config, setConfig] = useState(() => loadConfigForAdapter(AVAILABLE_ADAPTERS[0]));
 
   const [cityData, setCityData] = useState<any[]>([]);
   const [roadData, setRoadData] = useState<any[]>([]);
@@ -72,9 +96,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   }, []);
 
+  useEffect(() => {
+    const key = `nl_quiz_config_${activeAdapter.id}`;
+    localStorage.setItem(key, JSON.stringify(config));
+  }, [config, activeAdapter.id]);
+
   const handleSetAdapter = (adapter: GameModeAdapter<any, any>) => {
     setActiveAdapter(adapter);
-    setConfig(adapter.defaultConfig);
+    setConfig(loadConfigForAdapter(adapter));
     clearReplay();
   };
 

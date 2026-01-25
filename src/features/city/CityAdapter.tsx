@@ -8,6 +8,9 @@ import { CityConfigPanel } from './components/CityConfigPanel';
 import { CityInfoCard } from './components/CityInfoCard';
 import { FlashingLayer } from '../../components/map/FlashingLayer';
 import { normalizeString } from '../../utils';
+import { toQuestion } from './utils';
+import { createLearningQueue } from '../../core/engine/learning';
+import { DEFAULT_MIX_OPTIONS } from '../../core/types/learning';
 
 export const CityAdapter: GameModeAdapter<CityConfig, City> = {
   id: 'city-quiz',
@@ -18,31 +21,34 @@ export const CityAdapter: GameModeAdapter<CityConfig, City> = {
     minPopulation: 10000,
     maxPopulation: 1000000,
     selectedProvinces: [],
-    mode: 'POINT'
+    mode: 'POINT',
+    learnMode: false,
+    learningOptions: DEFAULT_MIX_OPTIONS,
   },
 
-  generateQuestions: (data, config, replay) => {
+  generateQuestions: (data, config, replay, context) => {
     let queuePool: City[] = [];
     let solvedPool: City[] = [];
 
     if (replay) {
       queuePool = data.filter(c => replay.toPlayIds.includes(c.id));
       solvedPool = data.filter(c => replay.solvedIds.includes(c.id));
-    } else {
-      queuePool = data.filter(c =>
-        c.population >= config.minPopulation &&
-        c.population <= config.maxPopulation &&
-        (config.selectedProvinces.length === 0 || config.selectedProvinces.includes(c.province))
-      );
+      return { queue: queuePool.map(toQuestion), initialCorrect: solvedPool.map(toQuestion) }
     }
 
-    const shuffled = _.shuffle(queuePool);
+    if (config.learnMode && context?.progress) {
+      const queue = createLearningQueue(data, context.progress, (c) => c.population, config.learningOptions);
 
-    const toQuestion = (city: City) => ({
-      id: city.id,
-      prompt: city.name,
-      payload: city,
-    });
+      return { queue: queue.map(toQuestion), initialCorrect: [] };
+    }
+
+    queuePool = data.filter(c =>
+      c.population >= config.minPopulation &&
+      c.population <= config.maxPopulation &&
+      (config.selectedProvinces.length === 0 || config.selectedProvinces.includes(c.province))
+    );
+
+    const shuffled = _.shuffle(queuePool);
 
     return {
       queue: shuffled.map(toQuestion),
@@ -141,7 +147,7 @@ export const CityAdapter: GameModeAdapter<CityConfig, City> = {
         <GeoJSON key={`w-${history.wrong.length}`} data={wrongData as any} style={getStyle('wrong')} onEachFeature={onEachFeature} />
 
         {/* Current Highlight (Only for Name Mode) */}
-        {mode !== 'POINT' && currentQuestion && (
+        {mode === 'NAME' && currentQuestion && (
           <GeoJSON key={`curr-${currentQuestion.id}`} data={currentQuestion.payload.geometry} style={getStyle('current')} interactive={false} />
         )}
 

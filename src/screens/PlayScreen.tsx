@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useApp } from '../core/context/AppContext';
+import { useProgress } from '../core/context/ProgressContext';
 import { useQuizEngine } from '../core/engine/useQuizEngine';
 import { GameMap } from '../components/map/GameMap';
 import { Button } from '../components/ui/Button';
@@ -16,6 +17,7 @@ export const PlayScreen = () => {
     setScreen, setLastGameResult, replayOptions, clearReplay
   } = useApp();
   const { aliases } = useAliasContext();
+  const { progress, updateProgress } = useProgress();
 
   const [inputValue, setInputValue] = useState('');
   const [selectedFeature, setSelectedFeature] = useState<GameFeature | null>(null);
@@ -23,8 +25,8 @@ export const PlayScreen = () => {
   // Generate Questions
   const { queue, initialCorrect } = useMemo(() => {
     const currentDataset = activeAdapter.id === 'city-quiz' ? data.cities : data.roads;
-    return activeAdapter.generateQuestions(currentDataset, config, replayOptions || undefined);
-  }, [activeAdapter, data, config, replayOptions]);
+    return activeAdapter.generateQuestions(currentDataset, config, replayOptions || undefined, { progress });
+  }, [activeAdapter, data, config, replayOptions, progress]);
 
   // Initialize Engine
   const { state, actions } = useQuizEngine({
@@ -33,16 +35,27 @@ export const PlayScreen = () => {
     scoreCalculator: activeAdapter.getScoreValue
   });
 
+  const hasSavedRef = useRef(false);
+
   // Handle End Game
   useEffect(() => {
-    if (state.status === 'FINISHED') {
+    if (state.status === 'FINISHED' && !hasSavedRef.current) {
+      hasSavedRef.current = true;
+
+      const correctIds = state.history.correct.map(q => q.payload.id);
+      const wrongIds = state.history.wrong.map(q => q.payload.id);
+
+      if (config.learnMode && (correctIds.length > 0 || wrongIds.length > 0)) {
+        updateProgress(correctIds, wrongIds);
+      }
+
       setLastGameResult({
         stats: state.stats,
         history: state.history,
       });
       setScreen('RESULTS');
     }
-  }, [state.status, setScreen, setLastGameResult, state.stats, state.history]);
+  }, [state.status]);
 
   // Interactions
   const handleSubmitText = (e: React.FormEvent) => {

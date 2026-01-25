@@ -1,4 +1,5 @@
 import { type GameFeature } from "../../core/types";
+import type { LearningMixOptions } from "../../core/types/learning";
 
 export interface Road extends GameFeature {
   type: 'A' | 'N' | 'S' | 'E';
@@ -13,4 +14,6 @@ export interface RoadConfig {
   selectedTypes: ('A' | 'N' | 'S' | 'E')[];
   selectedProvinces: string[];
   mode: 'NAME' | 'POINT' | 'EXPLORE';
+  learnMode: boolean;
+  learningOptions: LearningMixOptions;
 }

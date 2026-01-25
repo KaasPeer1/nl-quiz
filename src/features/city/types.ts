@@ -1,4 +1,5 @@
 import type { GameFeature } from "../../core/types";
+import type { LearningMixOptions } from "../../core/types/learning";
 
 export interface City extends GameFeature {
   aliases: string[];
@@ -11,4 +12,6 @@ export interface CityConfig {
   maxPopulation: number;
   selectedProvinces: string[];
   mode: 'POINT' | 'NAME' | 'EXPLORE';
+  learnMode: boolean;
+  learningOptions: LearningMixOptions;
 }

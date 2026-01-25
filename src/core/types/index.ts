@@ -1,3 +1,5 @@
+import type { ProgressMap } from "./progress";
+
 // Generic interface for any spatial feature (City, Road, Province)
 export interface GameFeature {
   id: string;
@@ -36,6 +38,10 @@ export interface ReplayOptions {
   solvedIds: string[];
 }
 
+export interface GenerationContext {
+  progress?: ProgressMap;
+}
+
 // The contract every game mode must fulfill
 export interface GameModeAdapter<ConfigType, FeatureType extends GameFeature> {
   id: string;
@@ -44,7 +50,12 @@ export interface GameModeAdapter<ConfigType, FeatureType extends GameFeature> {
   defaultConfig: ConfigType;
 
   // Create the question queue based on config
-  generateQuestions: (data: FeatureType[], config: ConfigType, replay?: ReplayOptions) => { queue: Question<FeatureType>[]; initialCorrect: Question<FeatureType>[] };
+  generateQuestions: (
+    data: FeatureType[],
+    config: ConfigType,
+    replay?: ReplayOptions,
+    context?: GenerationContext,
+  ) => { queue: Question<FeatureType>[]; initialCorrect: Question<FeatureType>[] };
 
   // Check an answer (input) against the question and any context (i.e., aliases)
   validate: (question: Question<FeatureType>, input: string | FeatureType, context?: any) => boolean;
@@ -54,7 +65,7 @@ export interface GameModeAdapter<ConfigType, FeatureType extends GameFeature> {
 
 
   // --- Components ---
-  ConfigComponent: React.FC<{ config: ConfigType; onChange: (c: ConfigType) => void }>;
+  ConfigComponent: React.FC<{ config: ConfigType; onChange: (c: ConfigType) => void; data: FeatureType[]; }>;
 
   MapLayers: React.FC<{
     gameState: QuizState<FeatureType>;

@@ -36,6 +36,18 @@ const resources = {
         mode_select: "Select Game Mode",
         mode_name: "Name ⌨️",
         mode_point: "Point 📍",
+        learn_mode: {
+          title: "Enable Learning Mode 🎓",
+          description: "Progressive difficulty based on your mastery",
+          btn_reset: "Reset Learning Progress",
+          config: {
+            "title": "Configure Learning Mode",
+            "q_per_r": "Questions per Round",
+            "new_ratio": "New Material Ratio (only if less than {{maxActive}} active)",
+            "active_ratio": "Active Material Ratio",
+            "review_ratio": "Review Material Ratio (Calculated)"
+          }
+        },
         modes: {
           title: "Quiz Type",
           cities: {
@@ -130,6 +142,18 @@ const resources = {
         mode_select: "Selecteer het Speltype",
         mode_name: "Benoem ⌨️",
         mode_point: "Wijs aan 📍",
+        learn_mode: {
+          title: "Leermodus 🎓",
+          description: "Voeg automatisch meer steden toe op basis van voortgang",
+          btn_reset: "Verwijder Voortgang",
+          config: {
+            "title": "Stel Leermodus In",
+            "q_per_r": "Aantal Vragen per Ronde",
+            "new_ratio": "Verhouding Niewe Stof (alleen als minder dan {{maxActive}} in actieve behandeling)",
+            "active_ratio": "Verhouding Actieve Stof",
+            "review_ratio": "Verhouding Herhaalde Stof (Berekend)"
+          }
+        },
         modes: {
           title: "Quiz Type",
           cities: {

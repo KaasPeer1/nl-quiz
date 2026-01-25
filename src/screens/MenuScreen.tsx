@@ -5,9 +5,11 @@ import { useTranslation } from 'react-i18next';
 
 export const MenuScreen = () => {
   const { t } = useTranslation();
-  const { activeAdapter, setActiveAdapter, config, setConfig, setScreen, isLoading } = useApp();
+  const { activeAdapter, setActiveAdapter, config, setConfig, setScreen, isLoading, data } = useApp();
 
   if (isLoading) return <div className="flex justify-center items-center h-screen">Loading Data...</div>;
+
+  const currentData = activeAdapter.id === 'city-quiz' ? data.cities : data.roads;
 
   return (
     <div className="max-w-xl mx-auto py-12 px-4 flex flex-col gap-6">
@@ -36,11 +38,11 @@ export const MenuScreen = () => {
         </div>
 
         {/* Adapter Specific Settings */}
-        <activeAdapter.ConfigComponent config={config} onChange={setConfig} />
+        <activeAdapter.ConfigComponent config={config} onChange={setConfig} data={currentData} />
 
         <div className="mt-8">
           <Button fullWidth onClick={() => setScreen('PLAY')}>
-            {config.mode === 'EXPLORE' ? t('menu.btn_explore') : t('menu.btn_start')}
+            {config?.mode === 'EXPLORE' ? t('menu.btn_explore') : t('menu.btn_start')}
           </Button>
         </div>
       </Card>

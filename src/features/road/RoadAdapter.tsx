@@ -9,6 +9,9 @@ import { RoadInfoCard } from './components/RoadInfoCard';
 import { FlashingLayer } from '../../components/map/FlashingLayer';
 import { findRoadsAtPoint, getRoadBounds, type SimpleBounds } from './utils/geo';
 import { normalizeString } from '../../utils';
+import { createLearningQueue } from '../../core/engine/learning';
+import { toQuestion } from './utils';
+import { DEFAULT_MIX_OPTIONS } from '../../core/types/learning';
 
 export const RoadAdapter: GameModeAdapter<RoadConfig, Road> = {
   id: 'road-quiz',
@@ -20,31 +23,34 @@ export const RoadAdapter: GameModeAdapter<RoadConfig, Road> = {
     maxLength: 300,
     selectedTypes: ['A'],
     selectedProvinces: [],
-    mode: 'POINT'
+    mode: 'POINT',
+    learnMode: false,
+    learningOptions: DEFAULT_MIX_OPTIONS,
   },
 
-  generateQuestions: (data, config, replay) => {
+  generateQuestions: (data, config, replay, context) => {
     let queuePool: Road[] = [];
     let solvedPool: Road[] = [];
 
     if (replay) {
       queuePool = data.filter(r => replay.toPlayIds.includes(r.id));
       solvedPool = data.filter(r => replay.solvedIds.includes(r.id));
-    } else {
-      queuePool = data.filter(r =>
-        r.lengthKm >= config.minLength &&
-        r.lengthKm <= config.maxLength &&
-        config.selectedTypes.includes(r.type)
-      );
+      return { queue: queuePool.map(toQuestion), initialCorrect: solvedPool.map(toQuestion) }
     }
 
-    const shuffledQueue = _.shuffle(queuePool);
+    if (config.learnMode && context?.progress) {
+      const queue = createLearningQueue(data.filter(r => r.type !== 'E'), context.progress, (r) => r.lengthKm, config.learningOptions);
 
-    const toQuestion = (r: Road): Question<Road> => ({
-      id: r.id,
-      prompt: r.name,
-      payload: r
-    });
+      return { queue: queue.map(toQuestion), initialCorrect: [] };
+    }
+
+    queuePool = data.filter(r =>
+      r.lengthKm >= config.minLength &&
+      r.lengthKm <= config.maxLength &&
+      config.selectedTypes.includes(r.type)
+    );
+
+    const shuffledQueue = _.shuffle(queuePool);
 
     return {
       queue: shuffledQueue.map(toQuestion),
@@ -187,7 +193,7 @@ export const RoadAdapter: GameModeAdapter<RoadConfig, Road> = {
         <GeoJSON key={`c-${history.correct.length}`} data={correctData as any} style={getStyle('correct')} interactive={false} />
         <GeoJSON key={`w-${history.wrong.length}`} data={wrongData as any} style={getStyle('wrong')} interactive={false} />
 
-        {mode !== 'POINT' && currentQuestion && (
+        {mode === 'NAME' && currentQuestion && (
           <GeoJSON key={`curr-${currentQuestion.id}`} data={currentQuestion.payload.geometry} style={getStyle('current')} interactive={false} />
         )}
 
