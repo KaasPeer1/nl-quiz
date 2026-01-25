@@ -63,7 +63,7 @@ export const GameMap: React.FC<GameMapProps> = ({
 
           <LayersControl.BaseLayer checked={activeLayer === "Names"} name="Names">
             <TileLayer
-              url="tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
+              url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
             />
           </LayersControl.BaseLayer>
 
