@@ -73,7 +73,7 @@ export const ProgressScreen = () => {
   const { setScreen, activeAdapter, setActiveAdapter, data, isLoading } = useApp();
   const [cityFilters, setCityFilters] = useState<CityFilters>(DEFAULT_CITY_FILTERS);
   const [roadFilters, setRoadFilters] = useState<RoadFilters>(DEFAULT_ROAD_FILTERS);
-  const [importMode, setImportMode] = useState<'replace' | 'merge'>('replace');
+  const [importMode, setImportMode] = useState<'replace' | 'merge'>('merge');
   const [importStatus, setImportStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [page, setPage] = useState(1);
