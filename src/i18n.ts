@@ -149,6 +149,13 @@ const resources = {
           wrong: "Wrong"
         },
         empty: "No features match these filters.",
+        pagination: {
+          page: "Page {{page}} of {{total}}",
+          rows: "Rows:",
+          all: "All",
+          prev: "Prev",
+          next: "Next"
+        },
         transfer: {
           title: "Transfer Progress",
           note: "Download and import across devices.",
@@ -308,6 +315,13 @@ const resources = {
           wrong: "Fout"
         },
         empty: "Geen items met deze filters.",
+        pagination: {
+          page: "Pagina {{page}} van {{total}}",
+          rows: "Rijen:",
+          all: "Alles",
+          prev: "Vorige",
+          next: "Volgende"
+        },
         transfer: {
           title: "Voortgang overzetten",
           note: "Download en importeer op een ander apparaat.",

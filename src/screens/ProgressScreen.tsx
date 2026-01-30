@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { useApp, AVAILABLE_ADAPTERS } from '../core/context/AppContext';
@@ -26,7 +26,7 @@ interface CityFilters {
 interface RoadFilters {
   minLength: number;
   maxLength: number;
-  selectedTypes: ('A' | 'N' | 'E')[];
+  selectedTypes: ('A' | 'N')[];
   status: ProgressStatus;
   sort: SortOption;
 }
@@ -42,7 +42,7 @@ const DEFAULT_CITY_FILTERS: CityFilters = {
 const DEFAULT_ROAD_FILTERS: RoadFilters = {
   minLength: RoadAdapter.defaultConfig.minLength,
   maxLength: RoadAdapter.defaultConfig.maxLength,
-  selectedTypes: ['A', 'N', 'E'],
+  selectedTypes: ['A', 'N'],
   status: 'all',
   sort: 'name',
 };
@@ -76,6 +76,8 @@ export const ProgressScreen = () => {
   const [importMode, setImportMode] = useState<'replace' | 'merge'>('replace');
   const [importStatus, setImportStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(50);
   const { maxLevel } = DEFAULT_LEARNING_CONFIG;
 
   if (isLoading) return <div className="flex justify-center items-center h-screen">Loading Data...</div>;
@@ -83,6 +85,7 @@ export const ProgressScreen = () => {
   const isCity = activeAdapter.id === 'city-quiz';
   const currentData = (isCity ? data.cities : data.roads) as (City | Road)[];
   const filters = isCity ? cityFilters : roadFilters;
+  const deferredFilters = useDeferredValue(filters);
 
   const provinces = useMemo(() => {
     if (!isCity) return [];
@@ -103,30 +106,34 @@ export const ProgressScreen = () => {
 
   const filtered = useMemo(() => {
     return items.filter((item) => {
-      if (filters.status !== 'all' && item.status !== filters.status) return false;
+      if (deferredFilters.status !== 'all' && item.status !== deferredFilters.status) return false;
 
       if (isCity) {
         const city = item.feature as City;
-        const maxPop = (filters as CityFilters).maxPopulation >= 1000000 ? Infinity : (filters as CityFilters).maxPopulation;
-        const minPop = (filters as CityFilters).minPopulation;
-        const provincesFilter = (filters as CityFilters).selectedProvinces;
+        const cityFilters = deferredFilters as Partial<CityFilters>;
+        const maxPopValue = cityFilters.maxPopulation ?? DEFAULT_CITY_FILTERS.maxPopulation;
+        const minPop = cityFilters.minPopulation ?? DEFAULT_CITY_FILTERS.minPopulation;
+        const provincesFilter = cityFilters.selectedProvinces ?? DEFAULT_CITY_FILTERS.selectedProvinces;
+        const maxPop = maxPopValue >= 1000000 ? Infinity : maxPopValue;
         if (city.population < minPop || city.population > maxPop) return false;
         if (provincesFilter.length > 0 && !provincesFilter.includes(city.province)) return false;
       } else {
         const road = item.feature as Road;
-        const maxLen = (filters as RoadFilters).maxLength >= 300 ? Infinity : (filters as RoadFilters).maxLength;
-        const minLen = (filters as RoadFilters).minLength;
-        const types = (filters as RoadFilters).selectedTypes;
+        const roadFilters = deferredFilters as Partial<RoadFilters>;
+        const maxLenValue = roadFilters.maxLength ?? DEFAULT_ROAD_FILTERS.maxLength;
+        const minLen = roadFilters.minLength ?? DEFAULT_ROAD_FILTERS.minLength;
+        const types = roadFilters.selectedTypes ?? DEFAULT_ROAD_FILTERS.selectedTypes;
+        const maxLen = maxLenValue >= 300 ? Infinity : maxLenValue;
         if (road.lengthKm < minLen || road.lengthKm > maxLen) return false;
-        if (!types.includes(road.type as 'A' | 'N' | 'E')) return false;
+        if (!types.includes(road.type as 'A' | 'N')) return false;
       }
 
       return true;
     });
-  }, [items, filters, isCity]);
+  }, [items, deferredFilters, isCity]);
 
   const sorted = useMemo(() => {
-    const sort = filters.sort;
+    const sort = deferredFilters.sort;
     const list = [...filtered];
     list.sort((a, b) => {
       switch (sort) {
@@ -140,7 +147,7 @@ export const ProgressScreen = () => {
       }
     });
     return list;
-  }, [filtered, filters.sort]);
+  }, [filtered, deferredFilters.sort]);
 
   const summary = useMemo(() => {
     const totals = {
@@ -166,6 +173,10 @@ export const ProgressScreen = () => {
     else setRoadFilters(DEFAULT_ROAD_FILTERS);
   };
 
+  useEffect(() => {
+    setPage(1);
+  }, [isCity, cityFilters, roadFilters]);
+
   const toggleProvince = (province: string) => {
     if (!isCity) return;
     const current = (filters as CityFilters).selectedProvinces;
@@ -186,7 +197,7 @@ export const ProgressScreen = () => {
     }
   };
 
-  const toggleRoadType = (type: 'A' | 'N' | 'E') => {
+  const toggleRoadType = (type: 'A' | 'N') => {
     if (isCity) return;
     const current = (filters as RoadFilters).selectedTypes;
     if (current.includes(type)) {
@@ -227,6 +238,12 @@ export const ProgressScreen = () => {
       setImportStatus({ type: 'error', message: t('progress.transfer.status_error') });
     }
   };
+
+  const totalPages = pageSize === 0 ? 1 : Math.max(1, Math.ceil(sorted.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const pageItems = pageSize === 0
+    ? sorted
+    : sorted.slice((safePage - 1) * pageSize, safePage * pageSize);
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-4 flex flex-col gap-6 w-full">
@@ -387,10 +404,6 @@ export const ProgressScreen = () => {
                   <input type="checkbox" checked={roadFilters.selectedTypes.includes('N')} onChange={() => toggleRoadType('N')} className="w-5 h-5 accent-blue-600" />
                   <span className="font-bold text-yellow-600 bg-yellow-100 px-2 rounded border border-yellow-200">{t('menu.modes.road.type.provincial')}</span>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input type="checkbox" checked={roadFilters.selectedTypes.includes('E')} onChange={() => toggleRoadType('E')} className="w-5 h-5 accent-blue-600" />
-                  <span className="font-bold text-teal-600 bg-teal-100 px-2 rounded border border-teal-200">{t('menu.modes.road.type.european')}</span>
-                </label>
               </div>
             </div>
 
@@ -460,7 +473,7 @@ export const ProgressScreen = () => {
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-lg font-bold">{t('progress.list_title')}</h2>
           <div className="text-sm text-gray-500">
-            {t('progress.list_count', { shown: sorted.length, total: items.length })}
+            {t('progress.list_count', { shown: pageItems.length, total: items.length })}
           </div>
         </div>
 
@@ -477,7 +490,7 @@ export const ProgressScreen = () => {
               </tr>
             </thead>
             <tbody>
-              {sorted.map((item) => {
+              {pageItems.map((item) => {
                 const levelBadge = clsx(
                   "px-2 py-1 rounded text-xs font-semibold",
                   item.status === 'new' && "bg-gray-100 text-gray-600",
@@ -508,7 +521,7 @@ export const ProgressScreen = () => {
                   </tr>
                 );
               })}
-              {sorted.length === 0 && (
+              {pageItems.length === 0 && (
                 <tr>
                   <td className="py-8 text-center text-gray-500" colSpan={6}>
                     {t('progress.empty')}
@@ -517,6 +530,31 @@ export const ProgressScreen = () => {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 mt-4">
+          <div className="text-sm text-gray-500">
+            {t('progress.pagination.page', { page: safePage, total: totalPages })}
+          </div>
+          <div className="flex items-center gap-2">
+            <label className="text-sm text-gray-600">{t('progress.pagination.rows')}</label>
+            <select
+              className="border rounded px-2 py-1 text-sm"
+              value={pageSize}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+            >
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={200}>200</option>
+              <option value={500}>500</option>
+              <option value={0}>{t('progress.pagination.all')}</option>
+            </select>
+            <Button size="small" variant="outline" onClick={() => setPage(Math.max(1, safePage - 1))} disabled={safePage <= 1}>
+              {t('progress.pagination.prev')}
+            </Button>
+            <Button size="small" variant="outline" onClick={() => setPage(Math.min(totalPages, safePage + 1))} disabled={safePage >= totalPages}>
+              {t('progress.pagination.next')}
+            </Button>
+          </div>
         </div>
       </Card>
     </div>
