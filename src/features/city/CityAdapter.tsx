@@ -83,7 +83,7 @@ export const CityAdapter: GameModeAdapter<CityConfig, City> = {
   ConfigComponent: CityConfigPanel,
   InfoCardComponent: CityInfoCard,
   MapLayers: ({ gameState, onInteraction, config, selectedFeature }) => {
-    const { history, currentQuestion } = gameState;
+    const { currentQuestion } = gameState;
     const { mode } = config;
 
     const stateRef = useRef({ gameState, onInteraction })

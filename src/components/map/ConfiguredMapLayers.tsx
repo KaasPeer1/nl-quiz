@@ -1,4 +1,3 @@
-import React from 'react';
 import type L from 'leaflet';
 import type { GameFeature, Question, QuizState } from '../../core/types';
 import { BaseGeoJsonLayers } from './BaseGeoJsonLayers';

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { GeoJSON } from 'react-leaflet';
 import type L from 'leaflet';
 import type { Question, GameFeature } from '../../core/types';
