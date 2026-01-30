@@ -55,7 +55,7 @@ export const PlayScreen = () => {
       });
       setScreen('RESULTS');
     }
-  }, [state.status]);
+  }, [state.status, state.history, state.stats, config.learnMode, updateProgress, setLastGameResult, setScreen]);
 
   // Interactions
   const handleSubmitText = (e: React.FormEvent) => {

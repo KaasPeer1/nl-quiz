@@ -12,7 +12,6 @@ export interface RoadConfig {
   minLength: number;
   maxLength: number;
   selectedTypes: ('A' | 'N' | 'S' | 'E')[];
-  selectedProvinces: string[];
   mode: 'NAME' | 'POINT' | 'EXPLORE';
   learnMode: boolean;
   learningOptions: LearningMixOptions;

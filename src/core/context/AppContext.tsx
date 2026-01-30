@@ -73,9 +73,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     setIsLoading(true);
+    const baseUrl = import.meta.env.BASE_URL || '/';
     Promise.all([
-      fetch('/nl-quiz/data/cities.json').then(r => r.json()).catch(() => ({ features: [] })),
-      fetch('/nl-quiz/data/roads.json').then(r => r.json()).catch(() => ({ features: [] }))
+      fetch(`${baseUrl}data/cities.json`).then(r => r.json()).catch(() => ({ features: [] })),
+      fetch(`${baseUrl}data/roads.json`).then(r => r.json()).catch(() => ({ features: [] }))
     ]).then(([cityJson, roadJson]) => {
       const cities = cityJson.features.map((f: any) => ({
         ...f.properties,

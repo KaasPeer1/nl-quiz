@@ -37,8 +37,8 @@ export function createLearningQueue<T extends GameFeature>(
   buckets.new.sort((a, b) => scoreFn(b) - scoreFn(a));
 
   // Target counts
-  // We only take new cities if the active pool is small enough (less than 3x batch size)
-  const countNew = buckets.active.length < 3 * cfg.batchSize ? Math.floor(cfg.batchSize * cfg.newRatio) : 0;
+  // We only take new cities if the active pool is small enough
+  const countNew = buckets.active.length < cfg.maxActive ? Math.floor(cfg.batchSize * cfg.newRatio) : 0;
   const countActive = Math.floor(cfg.batchSize * cfg.activeRatio);
   const countReview = cfg.batchSize - countNew - countActive;
 

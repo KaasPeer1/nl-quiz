@@ -3,7 +3,7 @@ import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { GameMap } from '../components/map/GameMap';
 import { useTranslation } from 'react-i18next';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { QuizState } from '../core/types';
 import type { GameFeature } from '../core/types';
 
@@ -12,10 +12,13 @@ export const ResultScreen = () => {
   const { setScreen, startReplay, startNewGame, lastGameResult, clearReplay, activeAdapter, config } = useApp();
   const [selectedFeature, setSelectedFeature] = useState<any>(null);
 
-  if (!lastGameResult) {
-    setScreen('MENU');
-    return null;
-  }
+  useEffect(() => {
+    if (!lastGameResult) {
+      setScreen('MENU');
+    }
+  }, [lastGameResult, setScreen]);
+
+  if (!lastGameResult) return null;
 
   const { stats, history } = lastGameResult;
 

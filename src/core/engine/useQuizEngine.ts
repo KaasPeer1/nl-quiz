@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Question, QuizState } from '../types';
 
 interface EngineProps<T> {
@@ -8,6 +8,7 @@ interface EngineProps<T> {
 }
 
 export function useQuizEngine<T>({ questions, initialCorrect = [], scoreCalculator }: EngineProps<T>) {
+  const feedbackTimeoutRef = useRef<number | null>(null);
   const [state, setState] = useState<QuizState<T>>({
     status: 'IDLE',
     queue: [],
@@ -21,8 +22,28 @@ export function useQuizEngine<T>({ questions, initialCorrect = [], scoreCalculat
 
   // Initialization
   useEffect(() => {
+    if (feedbackTimeoutRef.current) {
+      clearTimeout(feedbackTimeoutRef.current);
+      feedbackTimeoutRef.current = null;
+    }
+
     if (questions.length === 0) {
-      setState(s => ({ ...s, status: 'FINISHED' }));
+      const startScore = initialCorrect.reduce((acc, q) => acc + scoreCalculator(q.payload), 0);
+      setState({
+        status: 'FINISHED',
+        queue: [],
+        currentQuestion: null,
+        lastWrong: null,
+        history: { correct: initialCorrect, wrong: [] },
+        feedback: null,
+        score: startScore,
+        stats: {
+          total: initialCorrect.length,
+          remaining: 0,
+          correctCount: initialCorrect.length,
+          wrongCount: 0
+        }
+      });
       return;
     }
 
@@ -39,11 +60,19 @@ export function useQuizEngine<T>({ questions, initialCorrect = [], scoreCalculat
       stats: {
         total: questions.length + initialCorrect.length,
         remaining: questions.length,
-        correctCount: 0,
+        correctCount: initialCorrect.length,
         wrongCount: 0
       }
     });
   }, [questions, initialCorrect, scoreCalculator]);
+
+  useEffect(() => {
+    return () => {
+      if (feedbackTimeoutRef.current) {
+        clearTimeout(feedbackTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const advance = useCallback((result: 'CORRECT' | 'WRONG' | 'DONT_KNOW') => {
     setState(prev => {
@@ -85,7 +114,10 @@ export function useQuizEngine<T>({ questions, initialCorrect = [], scoreCalculat
 
     // Clear feedback
     if (result !== 'DONT_KNOW') {
-      setTimeout(() => {
+      if (feedbackTimeoutRef.current) {
+        clearTimeout(feedbackTimeoutRef.current);
+      }
+      feedbackTimeoutRef.current = window.setTimeout(() => {
         setState(s => ({ ...s, feedback: null }));
       }, 500);
     }

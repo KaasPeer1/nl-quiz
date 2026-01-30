@@ -9,10 +9,11 @@ interface GameMapProps {
   children: React.ReactNode;
 }
 
-const BaseLayerTracker = () => {
+const BaseLayerTracker: React.FC<{ onChange: (name: string) => void }> = ({ onChange }) => {
   useMapEvents({
     baselayerchange: (e) => {
       localStorage.setItem("nl_quiz_basemap", e.name);
+      onChange(e.name);
     }
   });
   return null;
@@ -23,7 +24,7 @@ export const GameMap: React.FC<GameMapProps> = ({
   zoom = 8,
   children
 }) => {
-  const [activeLayer, _] = useState<string>(() => {
+  const [activeLayer, setActiveLayer] = useState<string>(() => {
     return localStorage.getItem("nl_quiz_basemap") || "Light";
   });
 
@@ -40,7 +41,7 @@ export const GameMap: React.FC<GameMapProps> = ({
         doubleClickZoom={false}
         zoomControl={false}
       >
-        <BaseLayerTracker />
+        <BaseLayerTracker onChange={setActiveLayer} />
         <LayersControl position="topleft">
 
           <LayersControl.BaseLayer checked={activeLayer === "Light"} name="Light">

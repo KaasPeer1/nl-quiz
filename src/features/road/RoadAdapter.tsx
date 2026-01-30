@@ -1,17 +1,18 @@
 import { useMemo, useRef, useEffect } from 'react';
-import { GeoJSON, useMapEvents } from 'react-leaflet';
+import { useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import _ from 'lodash';
-import type { GameModeAdapter, Question } from '../../core/types';
+import type { GameModeAdapter } from '../../core/types';
 import type { Road, RoadConfig } from './types';
 import { RoadConfigPanel } from './components/RoadConfigPanel';
 import { RoadInfoCard } from './components/RoadInfoCard';
-import { FlashingLayer } from '../../components/map/FlashingLayer';
+import { ConfiguredMapLayers } from '../../components/map/ConfiguredMapLayers';
 import { findRoadsAtPoint, getRoadBounds, type SimpleBounds } from './utils/geo';
 import { normalizeString } from '../../utils';
 import { createLearningQueue } from '../../core/engine/learning';
 import { toQuestion } from './utils';
 import { DEFAULT_MIX_OPTIONS } from '../../core/types/learning';
+import type { MapLayersConfig } from '../../core/engine/mapLayersConfig';
 
 export const RoadAdapter: GameModeAdapter<RoadConfig, Road> = {
   id: 'road-quiz',
@@ -22,7 +23,6 @@ export const RoadAdapter: GameModeAdapter<RoadConfig, Road> = {
     minLength: 0,
     maxLength: 300,
     selectedTypes: ['A'],
-    selectedProvinces: [],
     mode: 'POINT',
     learnMode: false,
     learningOptions: DEFAULT_MIX_OPTIONS,
@@ -44,9 +44,10 @@ export const RoadAdapter: GameModeAdapter<RoadConfig, Road> = {
       return { queue: queue.map(toQuestion), initialCorrect: [] };
     }
 
+    const maxLength = config.maxLength >= 300 ? Infinity : config.maxLength;
     queuePool = data.filter(r =>
       r.lengthKm >= config.minLength &&
-      r.lengthKm <= config.maxLength &&
+      r.lengthKm <= maxLength &&
       config.selectedTypes.includes(r.type)
     );
 
@@ -116,17 +117,6 @@ export const RoadAdapter: GameModeAdapter<RoadConfig, Road> = {
     // Renderer
     const roadRenderer = useMemo(() => L.canvas({ tolerance: 15 }), []);
 
-    // Styles
-    const getStyle = (type: string) => {
-      const base = { weight: 3, renderer: roadRenderer, opacity: 1 };
-      if (type === 'bg') return { ...base, color: '#bbbbbb', opacity: 0.8, weight: 2 };
-      if (type === 'correct') return { ...base, color: '#16a34a' };
-      if (type === 'wrong') return { ...base, color: '#dc2626' };
-      if (type === 'current') return { ...base, color: '#2563eb' };
-      if (type === 'selected') return { ...base, color: '#2563eb' };
-      return base;
-    };
-
     // Click Handling (Specific to Roads because of pixel tolerance)
     const map = useMapEvents({
       click: (e) => {
@@ -169,47 +159,49 @@ export const RoadAdapter: GameModeAdapter<RoadConfig, Road> = {
       }, 50)
     });
 
-    // Convert to GeoJSON Format
-    const toGeo = (qs: Question<Road>[]) => ({
-      type: "FeatureCollection", features: qs.map(q => ({
-        type: "Feature", properties: q.payload, geometry: q.payload.geometry
-      }))
-    });
-
-    const bgData = useMemo(() => toGeo(queue), [queue]);
-    const correctData = useMemo(() => toGeo(history.correct), [history.correct]);
-    const wrongData = useMemo(() => toGeo(history.wrong), [history.wrong]);
-    const lastWrongData = useMemo(() => gameState.lastWrong?.payload, [gameState.lastWrong]);
-    const selectedData = useMemo(() => ({
-      type: "FeatureCollection" as const,
-      features: [{
-        type: "Feature", properties: { id: selectedFeature?.id }, geometry: selectedFeature?.geometry
-      }]
-    }), [selectedFeature]);
+    const mapConfig: MapLayersConfig<Road> = {
+      getStyle: (type, feature) => {
+        const base = { weight: 3, renderer: roadRenderer, opacity: 1 };
+        if (type === 'bg') {
+          if (mode === 'EXPLORE' && feature?.properties?.type) {
+            const roadType = feature.properties.type as Road['type'];
+            if (roadType === 'A') return { ...base, color: '#ef4444', opacity: 0.9, weight: 2 };
+            if (roadType === 'N') return { ...base, color: '#f59e0b', opacity: 0.9, weight: 2 };
+            if (roadType === 'E') return { ...base, color: '#14b8a6', opacity: 0.9, weight: 2 };
+            return { ...base, color: '#3b82f6', opacity: 0.9, weight: 2 };
+          }
+          return { ...base, color: '#bbbbbb', opacity: 0.8, weight: 2 };
+        }
+        if (type === 'correct') return { ...base, color: '#16a34a' };
+        if (type === 'wrong') return { ...base, color: '#dc2626' };
+        if (type === 'current') return { ...base, color: '#2563eb' };
+        if (type === 'selected') return { ...base, color: '#2563eb' };
+        return base;
+      },
+      featureToProperties: (feature) => ({ id: feature.id, type: feature.type }),
+      showCurrent: mode === 'NAME',
+      interactive: {
+        bg: false,
+        correct: false,
+        wrong: false,
+        current: false,
+        selected: false
+      },
+      flashBold: true
+    };
 
     return (
-      <>
-        <GeoJSON data={bgData as any} style={getStyle('bg')} interactive={false} />
-        <GeoJSON key={`c-${history.correct.length}`} data={correctData as any} style={getStyle('correct')} interactive={false} />
-        <GeoJSON key={`w-${history.wrong.length}`} data={wrongData as any} style={getStyle('wrong')} interactive={false} />
-
-        {mode === 'NAME' && currentQuestion && (
-          <GeoJSON key={`curr-${currentQuestion.id}`} data={currentQuestion.payload.geometry} style={getStyle('current')} interactive={false} />
-        )}
-
-        {lastWrongData && (
-          <FlashingLayer feature={lastWrongData} bold />
-        )}
-
-        {selectedFeature && (
-          <GeoJSON
-            key={`selected-${selectedFeature.id}`}
-            data={selectedData}
-            style={getStyle('selected')}
-            interactive={false}
-          />
-        )}
-      </>
+      <ConfiguredMapLayers
+        gameState={gameState}
+        selectedFeature={selectedFeature}
+        currentQuestion={currentQuestion}
+        config={mapConfig}
+        selectedKey={selectedFeature?.id}
+        remainingKey={`r-${gameState.queue.length}`}
+        correctKey={`c-${gameState.history.correct.length}`}
+        wrongKey={`w-${gameState.history.wrong.length}`}
+        currentKey={`curr-${currentQuestion?.id ?? 'none'}`}
+      />
     );
   }
 };

@@ -100,7 +100,7 @@ export const RoadConfigPanel: React.FC<{
                 value={[config.minLength, config.maxLength]}
                 onChange={([min, max]) => onChange({ ...config, minLength: min, maxLength: max })}
               />
-              <span className="font-mono text-sm w-12">{config.maxLength === 200 ? '200+' : `${config.maxLength}km`}</span>
+              <span className="font-mono text-sm w-12">{config.maxLength === 300 ? '300+' : `${config.maxLength}km`}</span>
             </div>
           </div>
         </>

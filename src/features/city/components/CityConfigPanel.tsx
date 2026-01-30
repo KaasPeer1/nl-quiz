@@ -118,7 +118,7 @@ export const CityConfigPanel: React.FC<{
                 value={[toSlider(config.minPopulation), toSlider(config.maxPopulation)]}
                 onChange={([min, max]) => onChange({ ...config, minPopulation: fromSlider(min), maxPopulation: fromSlider(max) })}
               />
-              <span className="font-mono text-sm w-16">{config.maxPopulation > 1000000 ? '1M+' : `${config.maxPopulation / 1000}k`}</span>
+              <span className="font-mono text-sm w-16">{config.maxPopulation >= 1000000 ? '1M+' : `${config.maxPopulation / 1000}k`}</span>
             </div>
           </div>
 

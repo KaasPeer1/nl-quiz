@@ -24,7 +24,7 @@ export const LearningSettingsControl: React.FC<Props> = ({ options, onChange }) 
     onChange({ ...options, activeRatio: safeVal / 100 });
   };
 
-  const maxActive = options.batchSize * 3;
+  const maxActive = options.maxActive ?? options.batchSize * 3;
   const newPct = Math.round(options.newRatio * 100);
   const activePct = Math.round(options.activeRatio * 100);
   const reviewPct = 100 - newPct - activePct;
@@ -42,7 +42,7 @@ export const LearningSettingsControl: React.FC<Props> = ({ options, onChange }) 
         <SimpleSlider
           min={5} max={50} step={5}
           value={options.batchSize}
-          onChange={(val) => onChange({ ...options, batchSize: val, maxActive: maxActive })}
+          onChange={(val) => onChange({ ...options, batchSize: val, maxActive: val * 3 })}
         />
       </div>
 

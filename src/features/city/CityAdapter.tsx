@@ -1,16 +1,16 @@
-import { useEffect, useMemo, useRef } from 'react';
-import { GeoJSON } from 'react-leaflet';
+import { useEffect, useRef } from 'react';
 import L from 'leaflet';
 import _ from 'lodash';
-import type { GameModeAdapter, Question } from '../../core/types';
+import type { GameModeAdapter } from '../../core/types';
 import type { City, CityConfig } from './types';
 import { CityConfigPanel } from './components/CityConfigPanel';
 import { CityInfoCard } from './components/CityInfoCard';
-import { FlashingLayer } from '../../components/map/FlashingLayer';
+import { ConfiguredMapLayers } from '../../components/map/ConfiguredMapLayers';
 import { normalizeString } from '../../utils';
 import { toQuestion } from './utils';
 import { createLearningQueue } from '../../core/engine/learning';
 import { DEFAULT_MIX_OPTIONS } from '../../core/types/learning';
+import type { MapLayersConfig } from '../../core/engine/mapLayersConfig';
 
 export const CityAdapter: GameModeAdapter<CityConfig, City> = {
   id: 'city-quiz',
@@ -42,9 +42,10 @@ export const CityAdapter: GameModeAdapter<CityConfig, City> = {
       return { queue: queue.map(toQuestion), initialCorrect: [] };
     }
 
+    const maxPopulation = config.maxPopulation >= 1000000 ? Infinity : config.maxPopulation;
     queuePool = data.filter(c =>
       c.population >= config.minPopulation &&
-      c.population <= config.maxPopulation &&
+      c.population <= maxPopulation &&
       (config.selectedProvinces.length === 0 || config.selectedProvinces.includes(c.province))
     );
 
@@ -82,39 +83,25 @@ export const CityAdapter: GameModeAdapter<CityConfig, City> = {
   ConfigComponent: CityConfigPanel,
   InfoCardComponent: CityInfoCard,
   MapLayers: ({ gameState, onInteraction, config, selectedFeature }) => {
-    const { history, currentQuestion, queue } = gameState;
+    const { history, currentQuestion } = gameState;
     const { mode } = config;
 
     const stateRef = useRef({ gameState, onInteraction })
     useEffect(() => { stateRef.current = { gameState, onInteraction }; }, [gameState, onInteraction])
 
-    // Styles
-    const getStyle = (type: 'bg' | 'correct' | 'wrong' | 'current' | 'selected') => {
-      switch (type) {
-        case 'bg': return { color: '#9ca3af', weight: 1, fillColor: '#e5e7eb', fillOpacity: 0.4 };
-        case 'correct': return { color: '#16a34a', weight: 1, fillColor: '#4ade80', fillOpacity: 0.8 };
-        case 'wrong': return { color: '#e53935', weight: 1, fillColor: '#ef5350', fillOpacity: 0.8 };
-        case 'current': return { color: '#2563eb', weight: 2, fillColor: '#60a5fa', fillOpacity: 0.9 };
-        case 'selected': return { color: '#2563eb', weight: 2, fillColor: '#60a5fa', fillOpacity: 0.9 };
-      }
+    const mapConfig: MapLayersConfig<City> = {
+      getStyle: (type) => {
+        switch (type) {
+          case 'bg': return { color: '#9ca3af', weight: 1, fillColor: '#e5e7eb', fillOpacity: 0.4 };
+          case 'correct': return { color: '#16a34a', weight: 1, fillColor: '#4ade80', fillOpacity: 0.8 };
+          case 'wrong': return { color: '#e53935', weight: 1, fillColor: '#ef5350', fillOpacity: 0.8 };
+          case 'current': return { color: '#2563eb', weight: 2, fillColor: '#60a5fa', fillOpacity: 0.9 };
+          case 'selected': return { color: '#2563eb', weight: 2, fillColor: '#60a5fa', fillOpacity: 0.9 };
+        }
+      },
+      featureToProperties: (feature) => ({ id: feature.id }),
+      showCurrent: mode === 'NAME'
     };
-
-    // Helper to extract features from Questions
-    const extract = (qs: Question<City>[]) => qs.map(q => ({
-      type: "Feature", properties: { id: q.payload.id }, geometry: q.payload.geometry
-    }));
-
-    // Memoize Collections
-    const correctData = useMemo(() => ({ type: "FeatureCollection", features: extract(history.correct) }), [history.correct]);
-    const wrongData = useMemo(() => ({ type: "FeatureCollection", features: extract(history.wrong) }), [history.wrong]);
-    const remainingData = useMemo(() => ({ type: "FeatureCollection", features: extract(queue) }), [queue]);
-    const lastWrong = useMemo(() => gameState.lastWrong?.payload, [gameState.lastWrong]);
-    const selectedData = useMemo(() => ({
-      type: "FeatureCollection" as const,
-      features: [{
-        type: "Feature", properties: { id: selectedFeature?.id }, geometry: selectedFeature?.geometry
-      }]
-    }), [selectedFeature]);
 
     const handleLayerClick = (id: string) => {
       const { gameState: currentGameState, onInteraction: currentCb } = stateRef.current;
@@ -135,36 +122,18 @@ export const CityAdapter: GameModeAdapter<CityConfig, City> = {
     };
 
     return (
-      <>
-        {/* Background / Remaining */}
-        <GeoJSON
-          data={remainingData as any}
-          style={getStyle('bg')}
-          onEachFeature={onEachFeature}
-        />
-
-        <GeoJSON key={`c-${history.correct.length}`} data={correctData as any} style={getStyle('correct')} onEachFeature={onEachFeature} />
-        <GeoJSON key={`w-${history.wrong.length}`} data={wrongData as any} style={getStyle('wrong')} onEachFeature={onEachFeature} />
-
-        {/* Current Highlight (Only for Name Mode) */}
-        {mode === 'NAME' && currentQuestion && (
-          <GeoJSON key={`curr-${currentQuestion.id}`} data={currentQuestion.payload.geometry} style={getStyle('current')} interactive={false} />
-        )}
-
-        {/* Flashing Last Wrong */}
-        {lastWrong && (
-          <FlashingLayer feature={lastWrong} onEachFeature={onEachFeature} />
-        )}
-
-        {selectedFeature && (
-          <GeoJSON
-            key={`selected-${selectedFeature.id}`}
-            data={selectedData}
-            style={getStyle('selected')}
-            onEachFeature={onEachFeature}
-          />
-        )}
-      </>
+      <ConfiguredMapLayers
+        gameState={gameState}
+        selectedFeature={selectedFeature}
+        currentQuestion={currentQuestion}
+        config={mapConfig}
+        onEachFeature={onEachFeature}
+        selectedKey={selectedFeature?.id}
+        remainingKey={`r-${gameState.queue.length}`}
+        correctKey={`c-${gameState.history.correct.length}`}
+        wrongKey={`w-${gameState.history.wrong.length}`}
+        currentKey={`curr-${currentQuestion?.id ?? 'none'}`}
+      />
     );
   }
 };
