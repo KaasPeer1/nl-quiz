@@ -36,7 +36,7 @@ const DEFAULT_CITY_FILTERS: CityFilters = {
   maxPopulation: CityAdapter.defaultConfig.maxPopulation,
   selectedProvinces: [],
   status: 'all',
-  sort: 'name',
+  sort: 'score',
 };
 
 const DEFAULT_ROAD_FILTERS: RoadFilters = {
@@ -44,7 +44,7 @@ const DEFAULT_ROAD_FILTERS: RoadFilters = {
   maxLength: RoadAdapter.defaultConfig.maxLength,
   selectedTypes: ['A', 'N'],
   status: 'all',
-  sort: 'name',
+  sort: 'score',
 };
 
 const emptyProgress: ItemProgress = {
