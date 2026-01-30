@@ -33,6 +33,7 @@ const resources = {
         },
         btn_start: "Start Quiz",
         btn_explore: "Explore Map 🌍",
+        btn_progress: "Learning Progress",
         mode_select: "Select Game Mode",
         mode_name: "Name ⌨️",
         mode_point: "Point 📍",
@@ -107,6 +108,47 @@ const resources = {
         btn_menu: "Back to Menu",
         btn_start: "Start a New Game",
         stat_incorrect: "Incorrect",
+      },
+      progress: {
+        title: "Learning Progress",
+        subtitle: "Review mastery, streaks, and accuracy across your learning mode data.",
+        btn_back: "Back to Menu",
+        type_select: "Quiz Type",
+        summary: {
+          total: "Filtered Items",
+          new: "New",
+          active: "Active",
+          mastered: "Mastered",
+          correct: "Correct",
+          wrong: "Wrong"
+        },
+        filters: {
+          status: "Status",
+          sort: "Sort",
+          reset: "Reset Filters",
+          status_all: "All",
+          status_new: "New",
+          status_active: "Active",
+          status_mastered: "Mastered",
+          sort_name: "Name",
+          sort_level: "Level",
+          sort_streak: "Streak",
+          sort_correct: "Correct",
+          sort_wrong: "Wrong",
+          sort_population: "Population",
+          sort_length: "Length"
+        },
+        list_title: "Feature Progress",
+        list_count: "Showing {{shown}} of {{total}}",
+        columns: {
+          name: "Name",
+          details: "Details",
+          level: "Level",
+          streak: "Streak",
+          correct: "Correct",
+          wrong: "Wrong"
+        },
+        empty: "No features match these filters."
       }
     }
   },
@@ -139,6 +181,7 @@ const resources = {
         },
         btn_start: "Start de Quiz!",
         btn_explore: "Verken de Kaart 🌍",
+        btn_progress: "Leervoortgang",
         mode_select: "Selecteer het Speltype",
         mode_name: "Benoem ⌨️",
         mode_point: "Wijs aan 📍",
@@ -213,6 +256,47 @@ const resources = {
         btn_menu: "Terug naar Menu",
         btn_start: "Begin een Nieuw Spel",
         stat_incorrect: "Fout",
+      },
+      progress: {
+        title: "Leervoortgang",
+        subtitle: "Bekijk beheersing, streaks en nauwkeurigheid in leermodus.",
+        btn_back: "Terug naar Menu",
+        type_select: "Quiz Type",
+        summary: {
+          total: "Gefilterde Items",
+          new: "Nieuw",
+          active: "Actief",
+          mastered: "Beheerst",
+          correct: "Goed",
+          wrong: "Fout"
+        },
+        filters: {
+          status: "Status",
+          sort: "Sorteren",
+          reset: "Filters Wissen",
+          status_all: "Alles",
+          status_new: "Nieuw",
+          status_active: "Actief",
+          status_mastered: "Beheerst",
+          sort_name: "Naam",
+          sort_level: "Level",
+          sort_streak: "Streak",
+          sort_correct: "Goed",
+          sort_wrong: "Fout",
+          sort_population: "Inwoners",
+          sort_length: "Lengte"
+        },
+        list_title: "Voortgang per item",
+        list_count: "Toont {{shown}} van {{total}}",
+        columns: {
+          name: "Naam",
+          details: "Details",
+          level: "Level",
+          streak: "Streak",
+          correct: "Goed",
+          wrong: "Fout"
+        },
+        empty: "Geen items met deze filters."
       }
     }
   }

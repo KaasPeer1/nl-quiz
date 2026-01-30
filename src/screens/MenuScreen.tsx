@@ -40,9 +40,12 @@ export const MenuScreen = () => {
         {/* Adapter Specific Settings */}
         <activeAdapter.ConfigComponent config={config} onChange={setConfig} data={currentData} />
 
-        <div className="mt-8">
+        <div className="mt-8 flex flex-col gap-2">
           <Button fullWidth onClick={() => setScreen('PLAY')}>
             {config?.mode === 'EXPLORE' ? t('menu.btn_explore') : t('menu.btn_start')}
+          </Button>
+          <Button fullWidth variant="outline" onClick={() => setScreen('PROGRESS')}>
+            {t('menu.btn_progress')}
           </Button>
         </div>
       </Card>

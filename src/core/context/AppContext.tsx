@@ -12,8 +12,8 @@ interface LastGameResult {
 }
 
 interface AppState {
-  screen: 'MENU' | 'PLAY' | 'RESULTS';
-  setScreen: (s: 'MENU' | 'PLAY' | 'RESULTS') => void;
+  screen: 'MENU' | 'PLAY' | 'RESULTS' | 'PROGRESS';
+  setScreen: (s: 'MENU' | 'PLAY' | 'RESULTS' | 'PROGRESS') => void;
 
   activeAdapter: GameModeAdapter<any, any>;
   setActiveAdapter: (adapter: GameModeAdapter<any, any>) => void;
@@ -60,7 +60,7 @@ const loadConfigForAdapter = (adapter: GameModeAdapter<any, any>) => {
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [screen, setScreen] = useState<'MENU' | 'PLAY' | 'RESULTS'>('MENU');
+  const [screen, setScreen] = useState<'MENU' | 'PLAY' | 'RESULTS' | 'PROGRESS'>('MENU');
   const [activeAdapter, setActiveAdapter] = useState(AVAILABLE_ADAPTERS[0]);
   const [config, setConfig] = useState(() => loadConfigForAdapter(AVAILABLE_ADAPTERS[0]));
 

@@ -5,12 +5,14 @@ import { AppProvider, useApp } from './core/context/AppContext';
 import { MenuScreen } from './screens/MenuScreen';
 import { PlayScreen } from './screens/PlayScreen';
 import { ResultScreen } from './screens/ResultScreen';
+import { ProgressScreen } from './screens/ProgressScreen';
 import { ProgressProvider } from './core/context/ProgressContext';
 
 const ScreenManager = () => {
   const { screen } = useApp();
   if (screen === 'PLAY') return <PlayScreen />;
   if (screen === 'RESULTS') return <ResultScreen />;
+  if (screen === 'PROGRESS') return <ProgressScreen />;
   return <MenuScreen />;
 }
 
