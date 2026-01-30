@@ -148,7 +148,18 @@ const resources = {
           correct: "Correct",
           wrong: "Wrong"
         },
-        empty: "No features match these filters."
+        empty: "No features match these filters.",
+        transfer: {
+          title: "Transfer Progress",
+          note: "Download and import across devices.",
+          download: "Download JSON",
+          import: "Import JSON",
+          mode_label: "Import Mode:",
+          mode_replace: "Replace",
+          mode_merge: "Merge",
+          status_success: "Progress imported successfully.",
+          status_error: "Import failed. Please check the file."
+        }
       }
     }
   },
@@ -296,7 +307,18 @@ const resources = {
           correct: "Goed",
           wrong: "Fout"
         },
-        empty: "Geen items met deze filters."
+        empty: "Geen items met deze filters.",
+        transfer: {
+          title: "Voortgang overzetten",
+          note: "Download en importeer op een ander apparaat.",
+          download: "Download JSON",
+          import: "Importeer JSON",
+          mode_label: "Importmodus:",
+          mode_replace: "Vervangen",
+          mode_merge: "Samenvoegen",
+          status_success: "Voortgang geïmporteerd.",
+          status_error: "Import mislukt. Controleer het bestand."
+        }
       }
     }
   }

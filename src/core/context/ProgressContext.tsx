@@ -6,6 +6,8 @@ interface ProgressContextType {
   progress: ProgressMap;
   updateProgress: (correctIds: string[], wrongIds: string[]) => void;
   resetProgress: () => void;
+  exportProgressData: () => { version: number; exportedAt: number; progress: ProgressMap };
+  importProgressData: (data: unknown, mode?: 'replace' | 'merge') => { ok: boolean; message?: string };
 }
 
 const ProgressContext = createContext<ProgressContextType>({} as ProgressContextType);
@@ -88,8 +90,68 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  const exportProgressData = () => ({
+    version: 1,
+    exportedAt: Date.now(),
+    progress
+  });
+
+  const importProgressData = (data: unknown, mode: 'replace' | 'merge' = 'replace') => {
+    const maybeData = data as any;
+    const rawProgress: ProgressMap | undefined = maybeData?.progress ?? maybeData;
+
+    if (!rawProgress || typeof rawProgress !== 'object') {
+      return { ok: false, message: 'Invalid progress data.' };
+    }
+
+    const entries = Object.entries(rawProgress);
+    for (const [key, value] of entries) {
+      if (!key || typeof key !== 'string') {
+        return { ok: false, message: 'Invalid progress keys.' };
+      }
+      const v = value as ItemProgress;
+      if (!v || typeof v !== 'object') {
+        return { ok: false, message: 'Invalid progress entry.' };
+      }
+      if (
+        typeof v.level !== 'number' ||
+        typeof v.streak !== 'number' ||
+        typeof v.totalCorrect !== 'number' ||
+        typeof v.totalWrong !== 'number' ||
+        typeof v.lastSeen !== 'number'
+      ) {
+        return { ok: false, message: 'Invalid progress fields.' };
+      }
+    }
+
+    setProgress(prev => {
+      if (mode === 'merge') {
+        const merged: ProgressMap = { ...prev };
+        entries.forEach(([id, value]) => {
+          const incoming = value as ItemProgress;
+          const existing = merged[id];
+          if (!existing) {
+            merged[id] = { ...incoming };
+            return;
+          }
+          merged[id] = {
+            level: Math.max(existing.level, incoming.level),
+            streak: Math.max(existing.streak, incoming.streak),
+            totalCorrect: existing.totalCorrect + incoming.totalCorrect,
+            totalWrong: existing.totalWrong + incoming.totalWrong,
+            lastSeen: Math.max(existing.lastSeen, incoming.lastSeen)
+          };
+        });
+        return merged;
+      }
+      return rawProgress;
+    });
+
+    return { ok: true };
+  };
+
   return (
-    <ProgressContext.Provider value={{ progress, updateProgress, resetProgress }}>
+    <ProgressContext.Provider value={{ progress, updateProgress, resetProgress, exportProgressData, importProgressData }}>
       {children}
     </ProgressContext.Provider>
   );

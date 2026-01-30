@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import clsx from 'clsx';
 import { useTranslation } from 'react-i18next';
 import { useApp, AVAILABLE_ADAPTERS } from '../core/context/AppContext';
@@ -69,10 +69,13 @@ const fromSlider = (val: number) => {
 
 export const ProgressScreen = () => {
   const { t } = useTranslation();
-  const { progress } = useProgress();
+  const { progress, exportProgressData, importProgressData } = useProgress();
   const { setScreen, activeAdapter, setActiveAdapter, data, isLoading } = useApp();
   const [cityFilters, setCityFilters] = useState<CityFilters>(DEFAULT_CITY_FILTERS);
   const [roadFilters, setRoadFilters] = useState<RoadFilters>(DEFAULT_ROAD_FILTERS);
+  const [importMode, setImportMode] = useState<'replace' | 'merge'>('replace');
+  const [importStatus, setImportStatus] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
   const { maxLevel } = DEFAULT_LEARNING_CONFIG;
 
   if (isLoading) return <div className="flex justify-center items-center h-screen">Loading Data...</div>;
@@ -194,6 +197,36 @@ export const ProgressScreen = () => {
   };
 
   const formatNumber = (value: number) => value.toLocaleString();
+
+  const handleDownload = () => {
+    const payload = exportProgressData();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const date = new Date(payload.exportedAt).toISOString().slice(0, 10);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nl-quiz-progress-${date}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleFilePick = () => fileInputRef.current?.click();
+
+  const handleImport = async (file: File) => {
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      const result = importProgressData(data, importMode);
+      if (!result.ok) {
+        setImportStatus({ type: 'error', message: result.message || t('progress.transfer.status_error') });
+        return;
+      }
+      setImportStatus({ type: 'success', message: t('progress.transfer.status_success') });
+    } catch (err) {
+      console.error(err);
+      setImportStatus({ type: 'error', message: t('progress.transfer.status_error') });
+    }
+  };
 
   return (
     <div className="max-w-6xl mx-auto py-10 px-4 flex flex-col gap-6 w-full">
@@ -373,6 +406,52 @@ export const ProgressScreen = () => {
                 <span className="font-mono text-sm w-12">{roadFilters.maxLength === 300 ? '300+' : `${roadFilters.maxLength}km`}</span>
               </div>
             </div>
+          </div>
+        )}
+      </Card>
+
+      <Card className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold">{t('progress.transfer.title')}</h2>
+          <div className="text-xs text-gray-400">{t('progress.transfer.note')}</div>
+        </div>
+        <div className="flex flex-wrap gap-3 items-center">
+          <Button variant="outline" onClick={handleDownload}>
+            {t('progress.transfer.download')}
+          </Button>
+          <Button variant="primary" onClick={handleFilePick}>
+            {t('progress.transfer.import')}
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImport(file);
+              e.currentTarget.value = '';
+            }}
+          />
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <label className="font-semibold">{t('progress.transfer.mode_label')}</label>
+            <select
+              className="border rounded px-2 py-1 text-sm"
+              value={importMode}
+              onChange={(e) => setImportMode(e.target.value as 'replace' | 'merge')}
+            >
+              <option value="replace">{t('progress.transfer.mode_replace')}</option>
+              <option value="merge">{t('progress.transfer.mode_merge')}</option>
+            </select>
+          </div>
+        </div>
+        {importStatus && (
+          <div className={clsx(
+            "text-sm px-3 py-2 rounded border",
+            importStatus.type === 'success' && "bg-green-50 border-green-200 text-green-700",
+            importStatus.type === 'error' && "bg-red-50 border-red-200 text-red-700"
+          )}>
+            {importStatus.message}
           </div>
         )}
       </Card>
