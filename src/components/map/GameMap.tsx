@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { MapContainer, TileLayer, LayersControl, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useApp } from '../../core/context/AppContext';
 
 interface GameMapProps {
   center?: [number, number];
@@ -24,9 +25,18 @@ export const GameMap: React.FC<GameMapProps> = ({
   zoom = 8,
   children
 }) => {
+  const { activeAdapter } = useApp();
   const [activeLayer, setActiveLayer] = useState<string>(() => {
     return localStorage.getItem("nl_quiz_basemap") || "Light";
   });
+  const canSelectNamesLayer = activeAdapter.id === 'road-quiz';
+
+  useEffect(() => {
+    if (!canSelectNamesLayer && activeLayer === 'Names') {
+      localStorage.setItem("nl_quiz_basemap", "Light");
+      setActiveLayer("Light");
+    }
+  }, [canSelectNamesLayer, activeLayer]);
 
   return (
     <div className="h-full w-full rounded-lg overflow-hidden shadow-lg border-2 border-gray-200 z-0 relative">
@@ -62,11 +72,13 @@ export const GameMap: React.FC<GameMapProps> = ({
             />
           </LayersControl.BaseLayer>
 
-          <LayersControl.BaseLayer checked={activeLayer === "Names"} name="Names">
-            <TileLayer
-              url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
-            />
-          </LayersControl.BaseLayer>
+          {canSelectNamesLayer && (
+            <LayersControl.BaseLayer checked={activeLayer === "Names"} name="Names">
+              <TileLayer
+                url="https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
+              />
+            </LayersControl.BaseLayer>
+          )}
 
         </LayersControl>
         {children}
