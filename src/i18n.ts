@@ -125,6 +125,8 @@ const resources = {
         filters: {
           status: "Status",
           sort: "Sort",
+          search: "Search",
+          search_placeholder: "Type a name or province...",
           reset: "Reset Filters",
           status_all: "All",
           status_new: "New",
@@ -291,6 +293,8 @@ const resources = {
         filters: {
           status: "Status",
           sort: "Sorteren",
+          search: "Zoeken",
+          search_placeholder: "Typ een naam of provincie...",
           reset: "Filters Wissen",
           status_all: "Alles",
           status_new: "Nieuw",

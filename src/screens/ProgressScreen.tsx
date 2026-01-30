@@ -21,6 +21,7 @@ interface CityFilters {
   selectedProvinces: string[];
   status: ProgressStatus;
   sort: SortOption;
+  search: string;
 }
 
 interface RoadFilters {
@@ -29,6 +30,7 @@ interface RoadFilters {
   selectedTypes: ('A' | 'N')[];
   status: ProgressStatus;
   sort: SortOption;
+  search: string;
 }
 
 const DEFAULT_CITY_FILTERS: CityFilters = {
@@ -37,6 +39,7 @@ const DEFAULT_CITY_FILTERS: CityFilters = {
   selectedProvinces: [],
   status: 'all',
   sort: 'score',
+  search: '',
 };
 
 const DEFAULT_ROAD_FILTERS: RoadFilters = {
@@ -45,6 +48,7 @@ const DEFAULT_ROAD_FILTERS: RoadFilters = {
   selectedTypes: ['A', 'N'],
   status: 'all',
   sort: 'score',
+  search: '',
 };
 
 const emptyProgress: ItemProgress = {
@@ -107,6 +111,18 @@ export const ProgressScreen = () => {
   const filtered = useMemo(() => {
     return items.filter((item) => {
       if (deferredFilters.status !== 'all' && item.status !== deferredFilters.status) return false;
+
+      const search = deferredFilters.search?.trim().toLowerCase();
+      if (search) {
+        const nameMatch = item.feature.name.toLowerCase().includes(search);
+        if (isCity) {
+          const city = item.feature as City;
+          const provinceMatch = city.province.toLowerCase().includes(search);
+          if (!nameMatch && !provinceMatch) return false;
+        } else if (!nameMatch) {
+          return false;
+        }
+      }
 
       if (isCity) {
         const city = item.feature as City;
@@ -273,78 +289,82 @@ export const ProgressScreen = () => {
         <p className="text-sm text-gray-400 mt-2">{t(activeAdapter.description)}</p>
       </Card>
 
-      <Card className="grid grid-cols-2 md:grid-cols-6 gap-4 text-center">
-        <div>
-          <div className="text-2xl font-bold text-blue-900">{summary.total}</div>
-          <div className="text-xs uppercase text-gray-400 font-semibold">{t('progress.summary.total')}</div>
-        </div>
-        <div>
-          <div className="text-2xl font-bold text-gray-600">{summary.new}</div>
-          <div className="text-xs uppercase text-gray-400 font-semibold">{t('progress.summary.new')}</div>
-        </div>
-        <div>
-          <div className="text-2xl font-bold text-blue-700">{summary.active}</div>
-          <div className="text-xs uppercase text-gray-400 font-semibold">{t('progress.summary.active')}</div>
-        </div>
-        <div>
-          <div className="text-2xl font-bold text-green-700">{summary.mastered}</div>
-          <div className="text-xs uppercase text-gray-400 font-semibold">{t('progress.summary.mastered')}</div>
-        </div>
-        <div>
-          <div className="text-2xl font-bold text-green-600">{summary.correct}</div>
-          <div className="text-xs uppercase text-gray-400 font-semibold">{t('progress.summary.correct')}</div>
-        </div>
-        <div>
-          <div className="text-2xl font-bold text-red-600">{summary.wrong}</div>
-          <div className="text-xs uppercase text-gray-400 font-semibold">{t('progress.summary.wrong')}</div>
+      <Card>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 text-center">
+          <div>
+            <div className="text-2xl font-bold text-blue-900">{summary.total}</div>
+            <div className="text-xs uppercase text-gray-400 font-semibold">{t('progress.summary.total')}</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-gray-600">{summary.new}</div>
+            <div className="text-xs uppercase text-gray-400 font-semibold">{t('progress.summary.new')}</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-blue-700">{summary.active}</div>
+            <div className="text-xs uppercase text-gray-400 font-semibold">{t('progress.summary.active')}</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-green-700">{summary.mastered}</div>
+            <div className="text-xs uppercase text-gray-400 font-semibold">{t('progress.summary.mastered')}</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-green-600">{summary.correct}</div>
+            <div className="text-xs uppercase text-gray-400 font-semibold">{t('progress.summary.correct')}</div>
+          </div>
+          <div>
+            <div className="text-2xl font-bold text-red-600">{summary.wrong}</div>
+            <div className="text-xs uppercase text-gray-400 font-semibold">{t('progress.summary.wrong')}</div>
+          </div>
         </div>
       </Card>
 
-      <Card className="flex flex-col gap-6">
-        <div className="flex flex-wrap gap-3 items-end justify-between">
-          <div className="flex flex-wrap gap-2 items-center">
-            <span className="text-sm font-semibold text-gray-600">{t('progress.filters.status')}</span>
-            {(['all', 'new', 'active', 'mastered'] as ProgressStatus[]).map((status) => (
-              <Button
-                key={status}
-                size="small"
-                variant={filters.status === status ? 'primary' : 'outline'}
-                onClick={() => {
-                  if (isCity) setCityFilters({ ...cityFilters, status });
-                  else setRoadFilters({ ...roadFilters, status });
-                }}
-              >
-                {t(`progress.filters.status_${status}`)}
-              </Button>
-            ))}
-          </div>
-          <div className="flex items-center gap-2">
-            <label className="text-sm font-semibold text-gray-600" htmlFor="progress-sort">
-              {t('progress.filters.sort')}
-            </label>
+      <Card className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold">{t('progress.transfer.title')}</h2>
+          <div className="text-xs text-gray-400">{t('progress.transfer.note')}</div>
+        </div>
+        <div className="flex flex-wrap gap-3 items-center">
+          <Button variant="outline" onClick={handleDownload}>
+            {t('progress.transfer.download')}
+          </Button>
+          <Button variant="primary" onClick={handleFilePick}>
+            {t('progress.transfer.import')}
+          </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="application/json"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) handleImport(file);
+              e.currentTarget.value = '';
+            }}
+          />
+          <div className="flex items-center gap-2 text-sm text-gray-600">
+            <label className="font-semibold">{t('progress.transfer.mode_label')}</label>
             <select
-              id="progress-sort"
               className="border rounded px-2 py-1 text-sm"
-              value={filters.sort}
-              onChange={(e) => {
-                const sort = e.target.value as SortOption;
-                if (isCity) setCityFilters({ ...cityFilters, sort });
-                else setRoadFilters({ ...roadFilters, sort });
-              }}
+              value={importMode}
+              onChange={(e) => setImportMode(e.target.value as 'replace' | 'merge')}
             >
-              <option value="name">{t('progress.filters.sort_name')}</option>
-              <option value="level">{t('progress.filters.sort_level')}</option>
-              <option value="streak">{t('progress.filters.sort_streak')}</option>
-              <option value="correct">{t('progress.filters.sort_correct')}</option>
-              <option value="wrong">{t('progress.filters.sort_wrong')}</option>
-              <option value="score">{isCity ? t('progress.filters.sort_population') : t('progress.filters.sort_length')}</option>
+              <option value="replace">{t('progress.transfer.mode_replace')}</option>
+              <option value="merge">{t('progress.transfer.mode_merge')}</option>
             </select>
-            <Button size="small" variant="outline" onClick={handleResetFilters}>
-              {t('progress.filters.reset')}
-            </Button>
           </div>
         </div>
+        {importStatus && (
+          <div className={clsx(
+            "text-sm px-3 py-2 rounded border",
+            importStatus.type === 'success' && "bg-green-50 border-green-200 text-green-700",
+            importStatus.type === 'error' && "bg-red-50 border-red-200 text-red-700"
+          )}>
+            {importStatus.message}
+          </div>
+        )}
+      </Card>
 
+      <Card className="flex flex-col gap-6">
         {isCity ? (
           <div className="flex flex-col gap-6">
             <div>
@@ -421,52 +441,69 @@ export const ProgressScreen = () => {
             </div>
           </div>
         )}
-      </Card>
 
-      <Card className="flex flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold">{t('progress.transfer.title')}</h2>
-          <div className="text-xs text-gray-400">{t('progress.transfer.note')}</div>
-        </div>
-        <div className="flex flex-wrap gap-3 items-center">
-          <Button variant="outline" onClick={handleDownload}>
-            {t('progress.transfer.download')}
-          </Button>
-          <Button variant="primary" onClick={handleFilePick}>
-            {t('progress.transfer.import')}
-          </Button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/json"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) handleImport(file);
-              e.currentTarget.value = '';
-            }}
-          />
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <label className="font-semibold">{t('progress.transfer.mode_label')}</label>
-            <select
-              className="border rounded px-2 py-1 text-sm"
-              value={importMode}
-              onChange={(e) => setImportMode(e.target.value as 'replace' | 'merge')}
-            >
-              <option value="replace">{t('progress.transfer.mode_replace')}</option>
-              <option value="merge">{t('progress.transfer.mode_merge')}</option>
-            </select>
+        <div className="flex flex-wrap gap-4 items-end justify-between">
+          <div className="flex flex-wrap gap-2 items-center">
+            <span className="text-sm font-semibold text-gray-600">{t('progress.filters.status')}</span>
+            {(['all', 'new', 'active', 'mastered'] as ProgressStatus[]).map((status) => (
+              <Button
+                key={status}
+                size="small"
+                variant={filters.status === status ? 'primary' : 'outline'}
+                onClick={() => {
+                  if (isCity) setCityFilters({ ...cityFilters, status });
+                  else setRoadFilters({ ...roadFilters, status });
+                }}
+              >
+                {t(`progress.filters.status_${status}`)}
+              </Button>
+            ))}
+          </div>
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-sm font-semibold text-gray-600" htmlFor="progress-search">
+                {t('progress.filters.search')}
+              </label>
+              <input
+                id="progress-search"
+                type="search"
+                className="border rounded px-3 py-1 text-sm w-56"
+                placeholder={t('progress.filters.search_placeholder')}
+                value={filters.search}
+                onChange={(e) => {
+                  const search = e.target.value;
+                  if (isCity) setCityFilters({ ...cityFilters, search });
+                  else setRoadFilters({ ...roadFilters, search });
+                }}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <label className="text-sm font-semibold text-gray-600" htmlFor="progress-sort">
+                {t('progress.filters.sort')}
+              </label>
+              <select
+                id="progress-sort"
+                className="border rounded px-2 py-1 text-sm"
+                value={filters.sort}
+                onChange={(e) => {
+                  const sort = e.target.value as SortOption;
+                  if (isCity) setCityFilters({ ...cityFilters, sort });
+                  else setRoadFilters({ ...roadFilters, sort });
+                }}
+              >
+                <option value="name">{t('progress.filters.sort_name')}</option>
+                <option value="level">{t('progress.filters.sort_level')}</option>
+                <option value="streak">{t('progress.filters.sort_streak')}</option>
+                <option value="correct">{t('progress.filters.sort_correct')}</option>
+                <option value="wrong">{t('progress.filters.sort_wrong')}</option>
+                <option value="score">{isCity ? t('progress.filters.sort_population') : t('progress.filters.sort_length')}</option>
+              </select>
+              <Button size="small" variant="outline" onClick={handleResetFilters}>
+                {t('progress.filters.reset')}
+              </Button>
+            </div>
           </div>
         </div>
-        {importStatus && (
-          <div className={clsx(
-            "text-sm px-3 py-2 rounded border",
-            importStatus.type === 'success' && "bg-green-50 border-green-200 text-green-700",
-            importStatus.type === 'error' && "bg-red-50 border-red-200 text-red-700"
-          )}>
-            {importStatus.message}
-          </div>
-        )}
       </Card>
 
       <Card className="overflow-hidden">
