@@ -38,7 +38,7 @@ export const PlayScreen = () => {
   const hasSavedRef = useRef(false);
 
   const persistProgress = useCallback(() => {
-    if (!config.learnMode || hasSavedRef.current) return;
+    if (!config.learnMode) return;
 
     const correctIds = state.history.correct.map(q => q.payload.id);
     const wrongIds = state.history.wrong.map(q => q.payload.id);
