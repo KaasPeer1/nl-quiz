@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useApp } from '../core/context/AppContext';
 import { useProgress } from '../core/context/ProgressContext';
 import { useQuizEngine } from '../core/engine/useQuizEngine';
@@ -37,17 +37,22 @@ export const PlayScreen = () => {
 
   const hasSavedRef = useRef(false);
 
+  const persistProgress = useCallback(() => {
+    if (!config.learnMode || hasSavedRef.current) return;
+
+    const correctIds = state.history.correct.map(q => q.payload.id);
+    const wrongIds = state.history.wrong.map(q => q.payload.id);
+
+    if (correctIds.length > 0 || wrongIds.length > 0) {
+      updateProgress(correctIds, wrongIds);
+    }
+  }, [config.learnMode, state.history, updateProgress]);
+
   // Handle End Game
   useEffect(() => {
     if (state.status === 'FINISHED' && !hasSavedRef.current) {
       hasSavedRef.current = true;
-
-      const correctIds = state.history.correct.map(q => q.payload.id);
-      const wrongIds = state.history.wrong.map(q => q.payload.id);
-
-      if (config.learnMode && (correctIds.length > 0 || wrongIds.length > 0)) {
-        updateProgress(correctIds, wrongIds);
-      }
+      persistProgress();
 
       setLastGameResult({
         stats: state.stats,
@@ -55,7 +60,13 @@ export const PlayScreen = () => {
       });
       setScreen('RESULTS');
     }
-  }, [state.status, state.history, state.stats, config.learnMode, updateProgress, setLastGameResult, setScreen]);
+  }, [state.status, state.history, state.stats, persistProgress, setLastGameResult, setScreen]);
+
+  const handleQuit = () => {
+    persistProgress();
+    clearReplay();
+    setScreen('MENU');
+  };
 
   // Interactions
   const handleSubmitText = (e: React.FormEvent) => {
@@ -113,7 +124,7 @@ export const PlayScreen = () => {
     <div className="h-screen w-screen relative flex flex-col">
       {/* HEADER */}
       <div className="bg-white border-b px-4 py-2 flex justify-between items-center z-10 shadow-sm">
-        <div className="font-bold text-blue-900 cursor-pointer" onClick={() => setScreen('MENU')}>
+        <div className="font-bold text-blue-900 cursor-pointer" onClick={handleQuit}>
           {t('header.title')}
         </div>
         {!isExplore && (
@@ -123,7 +134,7 @@ export const PlayScreen = () => {
             <span className="text-green-600">{t('header.correct')}: {state.stats.correctCount}</span>
           </div>
         )}
-        <Button variant="ghost" onClick={() => { clearReplay(); setScreen('MENU'); }}>{t('header.quit')}</Button>
+        <Button variant="ghost" onClick={handleQuit}>{t('header.quit')}</Button>
       </div>
 
       {/* MAP AREA */}
