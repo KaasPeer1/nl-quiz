@@ -38,8 +38,11 @@ export function createLearningQueue<T extends GameFeature>(
 
   // Target counts
   // We only take new cities if the active pool is small enough
-  const countNew = buckets.active.length < cfg.maxActive ? Math.floor(cfg.batchSize * cfg.newRatio) : 0;
-  const countActive = Math.floor(cfg.batchSize * cfg.activeRatio);
+  const shouldIncludeNew = buckets.active.length < cfg.maxActive;
+  const normalCountNew = Math.floor(cfg.batchSize * cfg.newRatio);
+  const countNew = shouldIncludeNew ? normalCountNew : 0;
+  const normalCountActive = Math.floor(cfg.batchSize * cfg.activeRatio)
+  const countActive = shouldIncludeNew ? normalCountActive : normalCountActive + normalCountNew;
   const countReview = cfg.batchSize - countNew - countActive;
 
   // Selection
