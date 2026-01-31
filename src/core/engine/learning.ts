@@ -50,7 +50,7 @@ export function createLearningQueue<T extends GameFeature>(
 
   // -- Select NEW --
   // Take top N (randomness), shuffle them, take target count
-  const newPool = buckets.new.slice(0, cfg.randomness);
+  const newPool = buckets.new.slice(0, countNew * cfg.randomFactor);
   queue.push(..._.sampleSize(newPool, countNew));
 
   // -- Select ACTIVE --
@@ -70,7 +70,7 @@ export function createLearningQueue<T extends GameFeature>(
     const remainingNew = buckets.new.filter(i => !currentIds.has(i.id));
 
     // We broaden the pool for backfill to ensure we find enough
-    const backfillPool = remainingNew.slice(0, cfg.randomness * 2);
+    const backfillPool = remainingNew.slice(0, missing * cfg.randomFactor);
     queue.push(..._.sampleSize(backfillPool, missing));
   }
 

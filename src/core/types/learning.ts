@@ -3,7 +3,7 @@ export interface LearningMixOptions {
   newRatio: number;
   maxActive: number;
   activeRatio: number;
-  randomness: number;
+  randomFactor: number;
 }
 
 export const DEFAULT_MIX_OPTIONS: LearningMixOptions = {
@@ -11,5 +11,5 @@ export const DEFAULT_MIX_OPTIONS: LearningMixOptions = {
   newRatio: 0.1,
   maxActive: 60,
   activeRatio: 0.7,
-  randomness: 10
+  randomFactor: 1.5
 };
