@@ -40,7 +40,7 @@ export const LearningSettingsControl: React.FC<Props> = ({ options, onChange }) 
           <span className="font-mono font-bold">{options.batchSize}</span>
         </div>
         <SimpleSlider
-          min={5} max={50} step={5}
+          min={5} max={300} step={5}
           value={options.batchSize}
           onChange={(val) => onChange({ ...options, batchSize: val, maxActive: val * 3 })}
         />
