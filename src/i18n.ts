@@ -122,6 +122,14 @@ const resources = {
           correct: "Correct",
           wrong: "Wrong"
         },
+        coverage: {
+          title: "Mastered Coverage",
+          population_label: "Population Covered",
+          road_label: "Road Length Covered",
+          note_all: "All items, ignoring filters.",
+          population_detail: "You know where {{known}} people live out of {{total}}.",
+          road_detail: "You know {{known}} km out of {{total}} km."
+        },
         filters: {
           status: "Status",
           sort: "Sort",
@@ -289,6 +297,14 @@ const resources = {
           mastered: "Beheerst",
           correct: "Goed",
           wrong: "Fout"
+        },
+        coverage: {
+          title: "Beheerst Percentage",
+          population_label: "Inwonerdekking",
+          road_label: "Weglengte dekking",
+          note_all: "Alle items, filters genegeerd.",
+          population_detail: "Je weet waar {{known}} mensen wonen van de {{total}}.",
+          road_detail: "Je kent {{known}} km van de {{total}} km."
         },
         filters: {
           status: "Status",

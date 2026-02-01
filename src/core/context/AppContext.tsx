@@ -35,6 +35,18 @@ interface AppState {
 
 const AppContext = createContext<AppState>({} as AppState);
 
+const LAST_ADAPTER_KEY = 'nl_quiz_last_adapter';
+
+const loadLastAdapter = () => {
+  try {
+    const savedId = localStorage.getItem(LAST_ADAPTER_KEY);
+    if (!savedId) return AVAILABLE_ADAPTERS[0];
+    return AVAILABLE_ADAPTERS.find((adapter) => adapter.id === savedId) || AVAILABLE_ADAPTERS[0];
+  } catch {
+    return AVAILABLE_ADAPTERS[0];
+  }
+};
+
 const loadConfigForAdapter = (adapter: GameModeAdapter<any, any>) => {
   const key = `nl_quiz_config_${adapter.id}`;
   const savedString = localStorage.getItem(key);
@@ -60,9 +72,10 @@ const loadConfigForAdapter = (adapter: GameModeAdapter<any, any>) => {
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const initialAdapter = loadLastAdapter();
   const [screen, setScreen] = useState<'MENU' | 'PLAY' | 'RESULTS' | 'PROGRESS'>('MENU');
-  const [activeAdapter, setActiveAdapter] = useState(AVAILABLE_ADAPTERS[0]);
-  const [config, setConfig] = useState(() => loadConfigForAdapter(AVAILABLE_ADAPTERS[0]));
+  const [activeAdapter, setActiveAdapter] = useState(initialAdapter);
+  const [config, setConfig] = useState(() => loadConfigForAdapter(initialAdapter));
 
   const [cityData, setCityData] = useState<any[]>([]);
   const [roadData, setRoadData] = useState<any[]>([]);
@@ -101,6 +114,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const key = `nl_quiz_config_${activeAdapter.id}`;
     localStorage.setItem(key, JSON.stringify(config));
   }, [config, activeAdapter.id]);
+
+  useEffect(() => {
+    localStorage.setItem(LAST_ADAPTER_KEY, activeAdapter.id);
+  }, [activeAdapter.id]);
 
   const handleSetAdapter = (adapter: GameModeAdapter<any, any>) => {
     setActiveAdapter(adapter);

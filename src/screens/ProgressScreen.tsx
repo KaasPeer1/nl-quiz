@@ -224,6 +224,28 @@ export const ProgressScreen = () => {
   };
 
   const formatNumber = (value: number) => value.toLocaleString();
+  const formatLength = (value: number) => value.toLocaleString(undefined, { maximumFractionDigits: 1 });
+  const formatPercent = (value: number) => `${value.toFixed(1)}%`;
+
+  const coverage = useMemo(() => {
+    let total = 0;
+    let known = 0;
+
+    items.forEach((item) => {
+      if (isCity) {
+        const population = (item.feature as City).population;
+        total += population;
+        if (item.progress.level >= maxLevel) known += population;
+      } else {
+        const length = (item.feature as Road).lengthKm;
+        total += length;
+        if (item.progress.level >= maxLevel) known += length;
+      }
+    });
+
+    const percent = total > 0 ? (known / total) * 100 : 0;
+    return { known, total, percent };
+  }, [items, isCity, maxLevel]);
 
   const handleDownload = () => {
     const payload = exportProgressData();
@@ -314,6 +336,32 @@ export const ProgressScreen = () => {
           <div>
             <div className="text-2xl font-bold text-red-600">{summary.wrong}</div>
             <div className="text-xs uppercase text-gray-400 font-semibold">{t('progress.summary.wrong')}</div>
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h2 className="text-lg font-bold">{t('progress.coverage.title')}</h2>
+            <div className="text-xs uppercase text-gray-400 font-semibold">
+              {isCity ? t('progress.coverage.population_label') : t('progress.coverage.road_label')}
+            </div>
+            <div className="text-xs text-gray-400">{t('progress.coverage.note_all')}</div>
+          </div>
+          <div className="text-left sm:text-right">
+            <div className="text-3xl font-bold text-blue-900">{formatPercent(coverage.percent)}</div>
+            <div className="text-sm text-gray-600">
+              {isCity
+                ? t('progress.coverage.population_detail', {
+                  known: formatNumber(Math.round(coverage.known)),
+                  total: formatNumber(Math.round(coverage.total)),
+                })
+                : t('progress.coverage.road_detail', {
+                  known: formatLength(coverage.known),
+                  total: formatLength(coverage.total),
+                })}
+            </div>
           </div>
         </div>
       </Card>
