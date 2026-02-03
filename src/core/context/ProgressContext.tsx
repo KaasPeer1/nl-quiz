@@ -72,6 +72,11 @@ export const ProgressProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           return;
         }
 
+        // Back to active pool if mastered and two times wrong in a row
+        if (entry.level === maxLevel && entry.streak === 0) {
+          entry.level--;
+        }
+
         entry.totalWrong++;
         entry.lastSeen = now;
 
