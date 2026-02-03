@@ -14,6 +14,6 @@ export interface LearningConfig {
 }
 
 export const DEFAULT_LEARNING_CONFIG: LearningConfig = {
-  streakThreshold: 2,
+  streakThreshold: 3,
   maxLevel: 5,
 };
